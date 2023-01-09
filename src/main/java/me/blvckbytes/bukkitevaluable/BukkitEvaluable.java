@@ -94,16 +94,16 @@ public class BukkitEvaluable extends ConfigValue {
     }
   }
 
-  public @Nullable Object asEnumerationConstant(Class<?> enumerationClass, IEvaluationEnvironment environment) {
+  public <T> @Nullable T asEnumerationConstant(Class<T> enumerationClass, IEvaluationEnvironment environment) {
     return parseEnum(enumerationClass, asString(environment));
   }
 
-  public Set<Object> asEnumerationConstantSet(Class<?> enumerationClass, IEvaluationEnvironment environment) {
+  public <T> Set<T> asEnumerationConstantSet(Class<T> enumerationClass, IEvaluationEnvironment environment) {
     Set<String> values = asSet(ScalarType.STRING, environment);
-    Set<Object> constants = new HashSet<>();
+    Set<T> constants = new HashSet<>();
 
     for (String value : values) {
-      Object constant = parseEnum(enumerationClass, value);
+      T constant = parseEnum(enumerationClass, value);
 
       if (constant == null)
         continue;

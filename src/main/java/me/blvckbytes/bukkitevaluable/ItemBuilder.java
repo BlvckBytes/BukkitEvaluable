@@ -11,7 +11,6 @@ import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
-import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -23,7 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -47,8 +49,8 @@ import java.util.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemBuilder implements IItemBuildable {
 
-  private final ItemStack stack;
-  private final ItemMeta meta;
+  private final ItemStack baseItem;
+  private final ItemMeta baseMeta;
 
   private boolean loreOverride;
   private boolean flagsOverride;
@@ -57,294 +59,162 @@ public class ItemBuilder implements IItemBuildable {
   private boolean patternOverride;
 
   private @Nullable BukkitEvaluable name;
-  private @Nullable BukkitEvaluable cAmount;
-  private @Nullable BukkitEvaluable cType;
-  private @Nullable BukkitEvaluable cColor;
-  private @Nullable BukkitEvaluable cTextures;
-  private @Nullable ItemStackBaseEffectSection cBaseEffect;
+  private final List<BukkitEvaluable> loreBlocks;
 
-  private final List<BukkitEvaluable> loreLinePacks;
-  private final List<ItemStackEnchantmentSection> cEnchantments;
-  private final List<BukkitEvaluable> cFlags;
-  private final List<ItemStackBannerPatternSection> cPatterns;
-  private final List<ItemStackCustomEffectSection> cCustomEffects;
+  private @Nullable BukkitEvaluable amount;
+  private @Nullable BukkitEvaluable type;
+  private @Nullable BukkitEvaluable color;
+  private @Nullable BukkitEvaluable textures;
+
+  private @Nullable ItemStackBaseEffectSection baseEffect;
+  private final List<ItemStackCustomEffectSection> customEffects;
+
+  private final List<ItemStackEnchantmentSection> enchantments;
+  private final List<ItemStackBannerPatternSection> bannerPatterns;
+  private final List<BukkitEvaluable> flags;
 
   public ItemBuilder(ItemStack item, int amount) {
     if (item == null)
-      throw new IllegalStateException("Item cannot be null.");
+      throw new IllegalStateException("Item cannot be null");
 
-    this.stack = item;
-    this.meta = item.getItemMeta();
+    this.baseItem = new ItemStack(item);
+    this.baseItem.setAmount(amount);
 
-    if (this.stack.getType() != Material.AIR && this.meta == null)
-      throw new IllegalStateException("Invalid item provided.");
+    this.baseMeta = item.getItemMeta();
 
-    this.stack.setAmount(amount);
+    if (this.baseMeta == null)
+      throw new IllegalStateException("Could not get meta of item");
 
-    this.loreLinePacks = new ArrayList<>();
-    this.cEnchantments = new ArrayList<>();
-    this.cFlags = new ArrayList<>();
-    this.cCustomEffects = new ArrayList<>();
-    this.cPatterns = new ArrayList<>();
+    this.loreBlocks = new ArrayList<>();
+    this.enchantments = new ArrayList<>();
+    this.flags = new ArrayList<>();
+    this.customEffects = new ArrayList<>();
+    this.bannerPatterns = new ArrayList<>();
   }
 
   //=========================================================================//
   //                                 Builder                                 //
   //=========================================================================//
 
-  /**
-   * Change the type of this item
-   * @param material New type
-   */
-  public ItemBuilder setType(Material material) {
-    stack.setType(material);
-    return this;
-  }
-
-  /**
-   * Change the type of this item
-   * @param material New type
-   */
-  public ItemBuilder setConfigType(BukkitEvaluable material) {
-    if (material == null)
+  public ItemBuilder setType(@Nullable BukkitEvaluable type) {
+    if (type == null)
       return this;
 
-    cType = material;
+    this.type = type;
     return this;
   }
 
-  /**
-   * Change the amount of this item
-   * @param amount New amount
-   */
-  public ItemBuilder setAmount(int amount) {
-    stack.setAmount(amount);
-    return this;
-  }
-
-  /**
-   * Change the amount of this item
-   * @param amount New amount
-   */
-  public ItemBuilder setConfigAmount(BukkitEvaluable amount) {
+  public ItemBuilder setAmount(@Nullable BukkitEvaluable amount) {
     if (amount == null)
       return this;
 
-    cAmount = amount;
+    this.amount = amount;
     return this;
   }
 
-  /**
-   * Add an enchantment with a specific level to this item
-   * @param enchantment Enchantment to add
-   * @param level Level to add the enchantment with
-   */
-  public ItemBuilder withEnchantment(Enchantment enchantment, int level) {
-    if (this.meta != null)
-      this.meta.addEnchant(enchantment, level, true);
-    return this;
-  }
-
-  /**
-   * Add a enchantment section array to this item
-   * @param enchantments Enchantment section
-   */
-  public ItemBuilder withConfigEnchantments(ItemStackEnchantmentSection[] enchantments) {
-    enchantmentsOverride = false;
-    cEnchantments.addAll(Arrays.asList(enchantments));
-    return this;
-  }
-
-  /**
-   * Add a enchantment section array to this item
-   * @param enchantments Enchantment section
-   */
-  public ItemBuilder withOverridingConfigEnchantments(ItemStackEnchantmentSection[] enchantments) {
-    enchantmentsOverride = true;
-    cEnchantments.clear();
-    cEnchantments.addAll(Arrays.asList(enchantments));
-    return this;
-  }
-
-  public ItemBuilder withFlag(ItemFlag flag) {
-    if (this.meta != null)
-      this.meta.addItemFlags(flag);
-    return this;
-  }
-
-  public ItemBuilder withConfigFlags(@Nullable BukkitEvaluable flag) {
-    if (flag == null)
-      return this;
-
-    this.flagsOverride = false;
-    this.cFlags.add(flag);
-    return this;
-  }
-
-  public ItemBuilder withOverridingConfigFlags(@Nullable BukkitEvaluable flag) {
-    if (flag == null)
-      return this;
-
-    this.flagsOverride = true;
-    this.cFlags.clear();
-    this.cFlags.add(flag);
-    return this;
-  }
-
-  public ItemBuilder withColor(Color color) {
-    this.applyColor(this.meta, color);
-    return this;
-  }
-
-  public ItemBuilder withConfigColor(@Nullable BukkitEvaluable color) {
-    if (color == null)
-      return this;
-
-    this.cColor = color;
-    return this;
-  }
-
-  public ItemBuilder withBaseEffect(PotionData effect) {
-    this.applyBaseEffect(this.meta, effect);
-    return this;
-  }
-
-  public ItemBuilder withConfigBaseEffect(@Nullable ItemStackBaseEffectSection effect) {
-    if (effect == null)
-      return this;
-
-    this.cBaseEffect = effect;
-    return this;
-  }
-
-  public ItemBuilder withCustomEffect(PotionEffect effect) {
-    this.applyCustomEffect(this.meta, effect);
-    return this;
-  }
-
-  public ItemBuilder withConfigCustomEffects(ItemStackCustomEffectSection[] effects) {
-    this.customEffectsOverride = false;
-    this.cCustomEffects.addAll(Arrays.asList(effects));
-    return this;
-  }
-
-  public ItemBuilder withOverridingConfigCustomEffects(ItemStackCustomEffectSection[] effects) {
-    this.customEffectsOverride = true;
-    this.cCustomEffects.clear();
-    this.cCustomEffects.addAll(Arrays.asList(effects));
-    return this;
-  }
-
-  /**
-   * Set a display name
-   * @param name Name to set
-   */
-  public ItemBuilder withName(@Nullable BukkitEvaluable name) {
+  public ItemBuilder setName(@Nullable BukkitEvaluable name) {
     this.name = name;
     return this;
   }
 
-  /**
-   * Add a lore to the existing lore
-   * @param lore Lines to set
-   */
-  public ItemBuilder withLoreLinePacks(@Nullable BukkitEvaluable lore) {
+  public ItemBuilder extendLore(@Nullable BukkitEvaluable lore) {
     if (lore == null)
       return this;
 
-    this.loreLinePacks.add(lore);
     this.loreOverride = false;
+    this.loreBlocks.add(lore);
     return this;
   }
 
-  /**
-   * Override all lore lines with the provided lore
-   * @param lore Lines to set
-   */
-  public ItemBuilder withOverridingLore(@Nullable BukkitEvaluable lore) {
+  public ItemBuilder overrideLore(@Nullable BukkitEvaluable lore) {
     if (lore == null)
       return this;
 
-    this.loreLinePacks.clear();
-    this.loreLinePacks.add(lore);
     this.loreOverride = true;
+    this.loreBlocks.clear();
+    this.loreBlocks.add(lore);
     return this;
   }
 
-  public ItemBuilder withTextures(String textures) {
-    this.applyTextures(this.meta, textures);
+  public ItemBuilder extendEnchantments(ItemStackEnchantmentSection[] enchantments) {
+    this.enchantmentsOverride = false;
+    Collections.addAll(this.enchantments, enchantments);
     return this;
   }
 
-  public ItemBuilder withConfigTextures(@Nullable BukkitEvaluable textures) {
+  public ItemBuilder overrideEnchantments(ItemStackEnchantmentSection[] enchantments) {
+    this.enchantmentsOverride = true;
+    this.enchantments.clear();
+    Collections.addAll(this.enchantments, enchantments);
+    return this;
+  }
+
+  public ItemBuilder extendFlags(@Nullable BukkitEvaluable flags) {
+    if (flags == null)
+      return this;
+
+    this.flagsOverride = false;
+    this.flags.add(flags);
+    return this;
+  }
+
+  public ItemBuilder overrideFlags(@Nullable BukkitEvaluable flag) {
+    if (flag == null)
+      return this;
+
+    this.flagsOverride = true;
+    this.flags.clear();
+    this.flags.add(flag);
+    return this;
+  }
+
+  public ItemBuilder setColor(@Nullable BukkitEvaluable color) {
+    if (color == null)
+      return this;
+
+    this.color = color;
+    return this;
+  }
+
+  public ItemBuilder setBaseEffect(@Nullable ItemStackBaseEffectSection effect) {
+    if (effect == null)
+      return this;
+
+    this.baseEffect = effect;
+    return this;
+  }
+
+  public ItemBuilder extendCustomEffects(ItemStackCustomEffectSection[] effects) {
+    this.customEffectsOverride = false;
+    Collections.addAll(this.customEffects, effects);
+    return this;
+  }
+
+  public ItemBuilder overrideCustomEffects(ItemStackCustomEffectSection[] effects) {
+    this.customEffectsOverride = true;
+    this.customEffects.clear();
+    Collections.addAll(this.customEffects, effects);
+    return this;
+  }
+
+  public ItemBuilder setTextures(@Nullable BukkitEvaluable textures) {
     if (textures == null)
       return this;
 
-    this.cTextures = textures;
+    this.textures = textures;
     return this;
   }
 
-  /**
-   * Sets the head game profile of the item-meta
-   * @param profile Game profile to set
-   */
-  public ItemBuilder withHeadProfile(GameProfile profile) {
-    return this.withHeadProfile(this.meta, profile);
-  }
-
-  /**
-   * Sets the head game profile of the item-meta
-   * @param profile Game profile to set
-   */
-  private ItemBuilder withHeadProfile(ItemMeta meta, GameProfile profile) {
-    if (!(meta instanceof SkullMeta))
-      return this;
-
-    // Try to find the setProfile method
-    Method setProfileMethod = null;
-    try {
-      setProfileMethod = meta.getClass().getDeclaredMethod("setProfile", GameProfile.class);
-    } catch (Exception ignored) {}
-
-    try {
-      // if available, we use setProfile(GameProfile) so that it sets both the profile field and the
-      // serialized profile field for us. If the serialized profile field isn't set
-      // ItemStack#isSimilar() and ItemStack#equals() throw an error.
-
-      // If setProfile is available, this is the preferred method, as it will also set
-      // the serialized profile field without which bukkit will panic on ItemStack#isSimilar() or ItemStack#equals()
-      if (setProfileMethod != null) {
-        setProfileMethod.setAccessible(true);
-        setProfileMethod.invoke(meta, profile);
-        return this;
-      }
-
-      // Method unavailable, just set the GameProfile field
-      Field profileField = meta.getClass().getDeclaredField("profile");
-      profileField.setAccessible(true);
-      profileField.set(meta, profile);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return this;
-  }
-
-  public ItemBuilder withPatterns(List<Pattern> patterns) {
-    patterns.forEach(pattern -> this.applyPattern(this.meta, pattern));
-    return this;
-  }
-
-  public ItemBuilder withConfigPatterns(ItemStackBannerPatternSection[] patterns) {
+  public ItemBuilder extendBannerPatterns(ItemStackBannerPatternSection[] patterns) {
     this.patternOverride = false;
-    this.cPatterns.addAll(Arrays.asList(patterns));
+    Collections.addAll(this.bannerPatterns, patterns);
     return this;
   }
 
-  public ItemBuilder withOverridingConfigPatterns(ItemStackBannerPatternSection[] patterns) {
+  public ItemBuilder overrideBannerPatterns(ItemStackBannerPatternSection[] patterns) {
     this.patternOverride = true;
-    this.cPatterns.clear();
-    this.cPatterns.addAll(Arrays.asList(patterns));
+    this.bannerPatterns.clear();
+    Collections.addAll(this.bannerPatterns, patterns);
     return this;
   }
 
@@ -354,41 +224,29 @@ public class ItemBuilder implements IItemBuildable {
 
   @Override
   public ItemStack build() {
-    // Build without any customizations
     return build(GPEEE.EMPTY_ENVIRONMENT);
   }
 
   @Override
   public ItemStack build(IEvaluationEnvironment environment) {
-    ItemStack res = stack.clone();
-
-    ItemMeta resMeta = res.getItemMeta();
-
-    if (resMeta == null)
-      throw new IllegalStateException("Invalid item provided.");
+    ItemStack res = baseItem.clone();
+    ItemMeta resMeta = baseMeta.clone();
 
     //////////////////////////////////// Type ///////////////////////////////////
 
-    if (cType != null) {
-      XMaterial type = cType.asXMaterial(environment);
+    if (type != null) {
+      XMaterial material = this.type.asXMaterial(environment);
 
-      if (type != null) {
-        type.setType(res);
+      if (material != null) {
+        material.setType(res);
         resMeta = res.getItemMeta();
-
-        if (resMeta == null)
-          throw new IllegalStateException("Invalid item provided.");
       }
     }
 
     ////////////////////////////////// Amount ///////////////////////////////////
 
-    if (cAmount != null) {
-      Long amount = cAmount.asScalar(ScalarType.LONG, environment);
-
-      if (amount != null)
-        res.setAmount(amount.intValue());
-    }
+    if (amount != null)
+      res.setAmount(this.amount.<Long>asScalar(ScalarType.LONG, environment).intValue());
 
     //////////////////////////////// Display name ////////////////////////////////
 
@@ -400,7 +258,7 @@ public class ItemBuilder implements IItemBuildable {
     if (loreOverride)
       resMeta.setLore(null);
 
-    if (loreLinePacks.size() > 0) {
+    if (loreBlocks.size() > 0) {
       // Get old lore lines to extend, if applicable
       List<String> lines = resMeta.getLore();
 
@@ -408,7 +266,7 @@ public class ItemBuilder implements IItemBuildable {
         lines = new ArrayList<>();
 
       // Extend by new lore lines
-      for (BukkitEvaluable line : loreLinePacks)
+      for (BukkitEvaluable line : loreBlocks)
         lines.addAll(line.asList(ScalarType.STRING, environment));
 
       resMeta.setLore(lines);
@@ -416,18 +274,25 @@ public class ItemBuilder implements IItemBuildable {
 
     /////////////////////////////////// Color //////////////////////////////////
 
-    if (cColor != null)
-      applyColor(resMeta, cColor.asColor(environment));
+    if (color != null) {
+      Color bukkitColor = color.asColor(environment);
+
+      if (bukkitColor != null)
+        applyColor(resMeta, bukkitColor);
+    }
 
     ////////////////////////////////// Textures /////////////////////////////////
 
-    if (cTextures != null)
-      applyTextures(resMeta, cTextures.asScalar(ScalarType.STRING, environment));
+    if (textures != null)
+      applyTextures(resMeta, textures.asScalar(ScalarType.STRING, environment));
 
     //////////////////////////////// Base Effect ////////////////////////////////
 
-    if (cBaseEffect != null)
-      applyBaseEffect(resMeta, cBaseEffect.asData(environment));
+    if (baseEffect != null) {
+      PotionData data = baseEffect.asData(environment);
+      if (data != null)
+        applyBaseEffect(resMeta, data);
+    }
 
     ////////////////////////////// Custom Effects ///////////////////////////////
 
@@ -435,9 +300,10 @@ public class ItemBuilder implements IItemBuildable {
       if (customEffectsOverride)
         ((PotionMeta) resMeta).clearCustomEffects();
 
-      if (cCustomEffects.size() > 0) {
-        ItemMeta finalResMeta = resMeta;
-        cCustomEffects.forEach(eff -> applyCustomEffect(finalResMeta, eff.asEffect(environment)));
+      for (ItemStackCustomEffectSection customEffect : customEffects) {
+        PotionEffect effect = customEffect.asEffect(environment);
+        if (effect != null)
+          applyCustomEffect(resMeta, effect);
       }
     }
 
@@ -446,48 +312,38 @@ public class ItemBuilder implements IItemBuildable {
     if (enchantmentsOverride)
       resMeta.getEnchants().keySet().forEach(resMeta::removeEnchant);
 
-    if (cEnchantments.size() > 0) {
-      ItemMeta finalResMeta = resMeta;
-      cEnchantments.forEach(ench -> {
-        Tuple<Enchantment, Integer> enchantment = ench.asEnchantment(environment);
-
-        // Invalid enchantment
-        if (enchantment == null)
-          return;
-
-        // Apply enchantment
-        finalResMeta.addEnchant(enchantment.getA(), enchantment.getB(), true);
-      });
+    for (ItemStackEnchantmentSection enchantment : enchantments) {
+      Tuple<Enchantment, Integer> enchantmentData = enchantment.asEnchantment(environment);
+      if (enchantmentData != null)
+        resMeta.addEnchant(enchantmentData.getA(), enchantmentData.getB(), true);
     }
 
     ///////////////////////////////// Item Flags ////////////////////////////////
 
-    if (flagsOverride)
-      resMeta.removeItemFlags(resMeta.getItemFlags().toArray(ItemFlag[]::new));
+    if (flagsOverride) {
+      for (ItemFlag flag : ItemFlag.values())
+        resMeta.removeItemFlags(flag);
+    }
 
-    if (cFlags.size() > 0) {
-      ItemMeta finalResMeta = resMeta;
-      cFlags.forEach(f -> {
-        // Try to parse into an ItemFlag
-        ItemFlag flag = (ItemFlag) f.asEnumerationConstant(ItemFlag.class, environment);
-
-        if (flag != null)
-          finalResMeta.addItemFlags(flag);
-      });
+    for (BukkitEvaluable flag : flags) {
+      for (ItemFlag itemFlag : flag.asEnumerationConstantSet(ItemFlag.class, environment))
+        resMeta.addItemFlags(itemFlag);
     }
 
     /////////////////////////////// Banner Patterns /////////////////////////////
 
     if (resMeta instanceof BannerMeta) {
+      BannerMeta bannerMeta = (BannerMeta) resMeta;
+
       if (patternOverride) {
-        BannerMeta bm = (BannerMeta) resMeta;
-        while (bm.getPatterns().size() > 0)
-          bm.removePattern(0);
+        while (bannerMeta.getPatterns().size() > 0)
+          bannerMeta.removePattern(0);
       }
 
-      if (cPatterns.size() > 0) {
-        ItemMeta finalResMeta = resMeta;
-        cPatterns.forEach(p -> applyPattern(finalResMeta, p.asPattern(environment)));
+      for (ItemStackBannerPatternSection bannerPattern : bannerPatterns) {
+        Pattern pattern = bannerPattern.asPattern(environment);
+        if (pattern != null)
+          applyPattern(resMeta, pattern);
       }
     }
 
@@ -497,26 +353,25 @@ public class ItemBuilder implements IItemBuildable {
 
   @Override
   public ItemBuilder copy() {
-    // Shallow list copies are enough, as config-values are always copied themselves
     return new ItemBuilder(
-      new ItemStack(stack),
-      meta.clone(),
+      new ItemStack(baseItem),
+      baseMeta.clone(),
       loreOverride,
       flagsOverride,
       enchantmentsOverride,
       customEffectsOverride,
       patternOverride,
       name,
-      cAmount,
-      cType,
-      cColor,
-      cTextures,
-      cBaseEffect,
-      new ArrayList<>(loreLinePacks),
-      new ArrayList<>(cEnchantments),
-      new ArrayList<>(cFlags),
-      new ArrayList<>(cPatterns),
-      new ArrayList<>(cCustomEffects)
+      new ArrayList<>(loreBlocks),
+      amount,
+      type,
+      color,
+      textures,
+      baseEffect,
+      new ArrayList<>(customEffects),
+      new ArrayList<>(enchantments),
+      new ArrayList<>(bannerPatterns),
+      new ArrayList<>(flags)
     );
   }
 
@@ -525,56 +380,56 @@ public class ItemBuilder implements IItemBuildable {
     ItemBuilder res = this.copy();
 
     if (data.getAmount() != null)
-      res.setConfigAmount(data.getAmount());
+      res.setAmount(data.getAmount());
 
     if (data.getType() != null)
-      res.setConfigType(data.getType());
+      res.setType(data.getType());
 
     if (data.getName() != null)
-      res.withName(data.getName());
+      res.setName(data.getName());
 
     if (data.getLore() != null) {
-      if (data.isLoreOverride())
-        res.withOverridingLore(data.getLore());
+      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_LORE))
+        res.overrideLore(data.getLore());
       else
-        res.withLoreLinePacks(data.getLore());
+        res.extendLore(data.getLore());
     }
 
     if (data.getFlags() != null) {
-      if (data.isFlagsOverride())
-        res.withOverridingConfigFlags(data.getFlags());
+      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_FLAGS))
+        res.overrideFlags(data.getFlags());
       else
-        res.withConfigFlags(data.getFlags());
+        res.extendFlags(data.getFlags());
     }
 
     if (data.getColor() != null)
-      res.withConfigColor(data.getColor());
+      res.setColor(data.getColor());
 
     if (data.getEnchantments().length > 0) {
-      if (data.isEnchantmentsOverride())
-        res.withOverridingConfigEnchantments(data.getEnchantments());
+      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_ENCHANTMENTS))
+        res.overrideEnchantments(data.getEnchantments());
       else
-        res.withConfigEnchantments(data.getEnchantments());
+        res.extendEnchantments(data.getEnchantments());
     }
 
     if (data.getTextures() != null)
-      res.withConfigTextures(data.getTextures());
+      res.setTextures(data.getTextures());
 
     if (data.getBaseEffect() != null)
-      res.withConfigBaseEffect(data.getBaseEffect());
+      res.setBaseEffect(data.getBaseEffect());
 
     if (data.getCustomEffects().length > 0) {
-      if (data.isCustomEffectsOverride())
-        res.withOverridingConfigCustomEffects(data.getCustomEffects());
+      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_CUSTOM_EFFECTS))
+        res.overrideCustomEffects(data.getCustomEffects());
       else
-        res.withConfigCustomEffects(data.getCustomEffects());
+        res.extendCustomEffects(data.getCustomEffects());
     }
 
     if (data.getBannerPatterns().length > 0) {
-      if (data.isBannerPatternsOverride())
-        res.withOverridingConfigPatterns(data.getBannerPatterns());
+      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_BANNER_PATTERNS))
+        res.overrideBannerPatterns(data.getBannerPatterns());
       else
-        res.withConfigPatterns(data.getBannerPatterns());
+        res.extendBannerPatterns(data.getBannerPatterns());
     }
 
     return res;
@@ -588,7 +443,7 @@ public class ItemBuilder implements IItemBuildable {
    * Applies a color value to the item-meta, based on it's type
    * @param color Color value
    */
-  private void applyColor(ItemMeta meta, @Nullable Color color) {
+  private void applyColor(ItemMeta meta, Color color) {
     if (meta instanceof LeatherArmorMeta)
       ((LeatherArmorMeta) meta).setColor(color);
 
@@ -627,18 +482,51 @@ public class ItemBuilder implements IItemBuildable {
   private void applyTextures(ItemMeta meta, String textures) {
     GameProfile prof = new GameProfile(UUID.randomUUID(), "");
     prof.getProperties().put("textures", new Property("textures", textures));
-    withHeadProfile(meta, prof);
+    applyHeadProfile(meta, prof);
   }
 
   /**
    * Applies a banner pattern to a banner
    * @param pattern Banner pattern
    */
-  private void applyPattern(ItemMeta meta, @Nullable Pattern pattern) {
-    if (pattern == null)
-      return;
-
+  private void applyPattern(ItemMeta meta, Pattern pattern) {
     if (meta instanceof BannerMeta)
       ((BannerMeta) meta).addPattern(pattern);
+  }
+
+  /**
+   * Sets the head game profile of the item-meta
+   * @param profile Game profile to set
+   */
+  private void applyHeadProfile(ItemMeta meta, GameProfile profile) {
+    if (!(meta instanceof SkullMeta))
+      return;
+
+    // Try to find the setProfile method
+    Method setProfileMethod = null;
+    try {
+      setProfileMethod = meta.getClass().getDeclaredMethod("setProfile", GameProfile.class);
+    } catch (Exception ignored) {}
+
+    try {
+      // if available, we use setProfile(GameProfile) so that it sets both the profile field and the
+      // serialized profile field for us. If the serialized profile field isn't set
+      // ItemStack#isSimilar() and ItemStack#equals() throw an error.
+
+      // If setProfile is available, this is the preferred method, as it will also set
+      // the serialized profile field without which bukkit will panic on ItemStack#isSimilar() or ItemStack#equals()
+      if (setProfileMethod != null) {
+        setProfileMethod.setAccessible(true);
+        setProfileMethod.invoke(meta, profile);
+        return;
+      }
+
+      // Method unavailable, just set the GameProfile field
+      Field profileField = meta.getClass().getDeclaredField("profile");
+      profileField.setAccessible(true);
+      profileField.set(meta, profile);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

@@ -1,7 +1,6 @@
 package me.blvckbytes.bukkitevaluable.section;
 
 import lombok.Getter;
-import me.blvckbytes.bbconfigmapper.IEvaluable;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;

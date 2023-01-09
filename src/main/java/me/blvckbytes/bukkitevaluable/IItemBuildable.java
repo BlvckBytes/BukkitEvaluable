@@ -25,14 +25,31 @@ import org.bukkit.inventory.ItemStack;
 */
 public interface IItemBuildable {
 
+  /**
+   * Build the item by evaluating it's templates in a specific evaluation environment
+   * @param environment Environment to use when evaluating the templates
+   */
   default ItemStack build(IEvaluationEnvironment environment) {
-    throw new UnsupportedOperationException("This buildable does not support templating");
+    throw new UnsupportedOperationException("This buildable does not support environments");
   }
 
+  /**
+   * Build the item without support for a templating evaluation environment
+   */
   ItemStack build();
 
+  /**
+   * Creates a carbon copy of this item which can then be modified
+   * without affecting the original instance in any way
+   */
   IItemBuildable copy();
 
+  /**
+   * Create a patched carbon copy of this item by applying all properties of the
+   * provided section according to it's patch flag values
+   * @param data Data to use when patching
+   * @return Patched carbon copy
+   */
   IItemBuildable patch(ItemStackSection data);
 
 }

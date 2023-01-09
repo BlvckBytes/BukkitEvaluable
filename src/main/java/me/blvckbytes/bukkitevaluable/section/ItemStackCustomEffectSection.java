@@ -1,7 +1,6 @@
 package me.blvckbytes.bukkitevaluable.section;
 
 import lombok.Getter;
-import me.blvckbytes.bbconfigmapper.IEvaluable;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
@@ -39,7 +38,7 @@ public class ItemStackCustomEffectSection implements IConfigSection {
   private @Nullable Boolean particles;
   private @Nullable Boolean icon;
 
-  public PotionEffect asEffect(IEvaluationEnvironment environment) {
+  public @Nullable PotionEffect asEffect(IEvaluationEnvironment environment) {
     // Cannot create an effect object without the effect itself
     PotionEffectType type = this.effect == null ? null : this.effect.asPotionEffectType(environment);
 

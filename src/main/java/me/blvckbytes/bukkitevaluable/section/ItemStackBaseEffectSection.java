@@ -34,18 +34,18 @@ public class ItemStackBaseEffectSection implements IConfigSection {
   private @Nullable Boolean extended;
   private @Nullable Boolean upgraded;
 
-  public PotionData asData(IEvaluationEnvironment environment) {
+  public @Nullable PotionData asData(IEvaluationEnvironment environment) {
     boolean _upgraded = upgraded != null && upgraded;
     boolean _extended = extended != null && extended;
 
     PotionType type = this.type == null ? null : this.type.asPotionType(environment);
 
+    if (type == null)
+      return null;
+
     // Potions cannot be both extended and upgraded at the same
     // time, focus the priority on the upgraded flag
-    return new PotionData(
-      type == null ? PotionType.AWKWARD : type,
-      !_upgraded && _extended, _upgraded
-    );
+    return new PotionData(type, !_upgraded && _extended, _upgraded);
   }
 
   public boolean describesData(PotionData data, IEvaluationEnvironment environment) {
