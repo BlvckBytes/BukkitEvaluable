@@ -47,4 +47,19 @@ public class ItemStackEnchantmentSection implements IConfigSection {
     // Fall back to level 1 if not provided
     return Tuple.of(enchantment, level == null ? 1 : level);
   }
+
+  public boolean describesEnchantment(Enchantment enchantment, int level, IEvaluationEnvironment environment) {
+    if (this.enchantment != null) {
+      Enchantment bukkitEnchantment = this.enchantment.asEnchantment(environment);
+      if (bukkitEnchantment != null && !bukkitEnchantment.equals(enchantment))
+        return false;
+    }
+
+    if (this.level != null) {
+      if (this.level.<Long>asScalar(ScalarType.LONG, environment).intValue() != level)
+        return false;
+    }
+
+    return true;
+  }
 }

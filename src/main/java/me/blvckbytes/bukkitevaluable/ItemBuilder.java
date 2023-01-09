@@ -49,6 +49,8 @@ import java.util.UUID;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemBuilder implements IItemBuildable {
 
+  // FIXME: Is it possible to for example override flags with an empty list? Don't think so...
+
   private final ItemStack baseItem;
   private final ItemMeta baseMeta;
 

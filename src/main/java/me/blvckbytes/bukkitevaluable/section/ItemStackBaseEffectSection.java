@@ -49,17 +49,22 @@ public class ItemStackBaseEffectSection implements IConfigSection {
   }
 
   public boolean describesData(PotionData data, IEvaluationEnvironment environment) {
-    PotionType type = this.type == null ? null : this.type.asPotionType(environment);
-    if (type != null && type != data.getType())
-      return false;
+    if (this.type != null) {
+      PotionType potionType = this.type.asPotionType(environment);
+      if (potionType != null && !potionType.equals(data.getType()))
+        return false;
+    }
 
-    if (extended != null && extended != data.isExtended())
-      return false;
+    if (this.extended != null) {
+      if (this.extended != data.isExtended())
+        return false;
+    }
 
-    if (upgraded != null && upgraded != data.isUpgraded())
-      return false;
+    if (this.upgraded != null) {
+      if (this.upgraded != data.isExtended())
+        return false;
+    }
 
-    // All checks passed
     return true;
   }
 }

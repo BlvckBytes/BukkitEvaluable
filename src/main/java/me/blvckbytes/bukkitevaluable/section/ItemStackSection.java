@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -258,8 +259,18 @@ public class ItemStackSection implements IConfigSection {
         return false;
 
       for (ItemStackCustomEffectSection effectSection : customEffects) {
+
+        boolean anyMatched = false;
+        for (PotionEffect customEffect : ((PotionMeta) meta).getCustomEffects()) {
+          if (!effectSection.describesEffect(customEffect, environment))
+            continue;
+
+          anyMatched = true;
+          break;
+        }
+
         // Current custom effect is not represented within the custom effects of the potion
-        if (((PotionMeta) meta).getCustomEffects().stream().anyMatch(customEffect -> effectSection.describesEffect(customEffect, environment)))
+        if (!anyMatched)
           return false;
       }
 

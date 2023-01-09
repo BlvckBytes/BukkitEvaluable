@@ -60,32 +60,29 @@ public class ItemStackCustomEffectSection implements IConfigSection {
     );
   }
 
-  public boolean describesEffect(@Nullable PotionEffect effect, IEvaluationEnvironment environment) {
-    if (effect == null)
-      return false;
+  public boolean describesEffect(PotionEffect effect, IEvaluationEnvironment environment) {
+    if (this.effect != null) {
+      PotionEffectType type = this.effect.asPotionEffectType(environment);
+      if (type != null && type != effect.getType())
+        return false;
+    }
 
-    PotionEffectType type = this.effect == null ? null : this.effect.asPotionEffectType(environment);
-    if (type != null && effect.getType() != type)
-      return false;
+    if (this.duration != null) {
+      if (this.duration.<Long>asScalar(ScalarType.LONG, environment).intValue() != effect.getDuration())
+        return false;
+    }
 
-    Integer duration = this.duration == null ? null : this.duration.<Long>asScalar(ScalarType.LONG, environment).intValue();
-    if (duration != null && effect.getDuration() != duration)
-      return false;
-
-    Integer amplifier = this.amplifier == null ? null : this.amplifier.<Long>asScalar(ScalarType.LONG, environment).intValue();
-    if (amplifier != null && effect.getAmplifier() != amplifier)
-      return false;
+    if (this.amplifier != null) {
+      if (this.amplifier.<Long>asScalar(ScalarType.LONG, environment).intValue() != effect.getDuration())
+        return false;
+    }
 
     if (this.ambient != null && effect.isAmbient() != this.ambient)
       return false;
 
-    if (this.particles != null && effect.hasParticles() != this.particles)
+    if (this.particles != null && effect.isAmbient() != this.particles)
       return false;
 
-    if (this.icon != null && effect.hasIcon() != this.icon)
-      return false;
-
-    // All checks passed
-    return true;
+    return this.icon == null || this.icon == effect.hasIcon();
   }
 }

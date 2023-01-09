@@ -35,13 +35,29 @@ public class ItemStackBannerPatternSection implements IConfigSection {
   private @Nullable BukkitEvaluable color;
 
   public @Nullable Pattern asPattern(IEvaluationEnvironment environment) {
-    PatternType pattern = this.pattern == null ? null : (PatternType) this.pattern.asEnumerationConstant(PatternType.class, environment);
-    DyeColor color = this.color == null ? null : (DyeColor) this.pattern.asEnumerationConstant(DyeColor.class, environment);
+    PatternType pattern = this.pattern == null ? null : this.pattern.asEnumerationConstant(PatternType.class, environment);
+    DyeColor color = this.color == null ? null : this.pattern.asEnumerationConstant(DyeColor.class, environment);
 
     // Cannot construct a pattern with missing data
     if (pattern == null || color == null)
       return null;
 
     return new Pattern(color, pattern);
+  }
+
+  public boolean describesPattern(Pattern pattern, IEvaluationEnvironment environment) {
+    if (this.pattern != null) {
+      PatternType type = this.pattern.asEnumerationConstant(PatternType.class, environment);
+      if (type != null && !type.equals(pattern.getPattern()))
+        return false;
+    }
+
+    if (this.color != null) {
+      DyeColor color = this.pattern.asEnumerationConstant(DyeColor.class, environment);
+      if (color != null && !color.equals(pattern.getColor()))
+        return false;
+    }
+
+    return true;
   }
 }
