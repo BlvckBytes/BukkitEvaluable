@@ -457,6 +457,7 @@ public class ItemBuilder implements IItemBuildable {
    * @param color Color value
    */
   private void applyColor(ItemMeta meta, Color color) {
+    // FIXME: In order to support future added meta types with colors, this should be accessed using reflect, as all methods have the same signature
     if (meta instanceof LeatherArmorMeta)
       ((LeatherArmorMeta) meta).setColor(color);
 

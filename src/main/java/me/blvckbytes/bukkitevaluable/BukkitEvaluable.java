@@ -69,6 +69,7 @@ public class BukkitEvaluable extends ConfigValue {
     return xEnchantment == null ? null : xEnchantment.getEnchant();
   }
 
+  @SuppressWarnings("deprecation")
   public @Nullable PotionType asPotionType(IEvaluationEnvironment environment) {
     String stringValue = asString(environment);
 

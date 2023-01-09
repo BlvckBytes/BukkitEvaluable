@@ -24,18 +24,23 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
-public enum ComparisonMismatch {
-  IS_NULL,
-  META_UNREADABLE,
-  TYPE_MISMATCH,
-  AMOUNT_MISMATCH,
-  DISPLAY_NAME_MISMATCH,
-  LORE_MISMATCH,
-  FLAGS_MISMATCH,
-  COLOR_MISMATCH,
-  ENCHANTMENTS_MISMATCH,
-  TEXTURES_MISMATCH,
-  BASE_EFFECT_MISMATCH,
-  CUSTOM_EFFECTS_MISMATCH,
-  BANNER_PATTERNS_MISMATCH
+import org.bukkit.enchantments.Enchantment;
+import org.jetbrains.annotations.Nullable;
+
+@FunctionalInterface
+public interface FEnchantmentPresenceChecker {
+
+  /**
+   * Checks whether the given enchantment information is present at the
+   * target that his checker operates on, where if both values are omitted
+   * the function has to return {@code true}. If both the enchantment and
+   * the level are available, that enchantment has to be present at the
+   * given level. Otherwise, any enchantment of this type or any enchantment
+   * with a matching level satisfy the checker.
+   * @param enchantment Enchantment to check for
+   * @param level Level to check for
+   * @return True on matches, false on absence
+   */
+  boolean apply(@Nullable Enchantment enchantment, @Nullable Integer level);
+
 }
