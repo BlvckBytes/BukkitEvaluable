@@ -54,8 +54,6 @@ import java.util.UUID;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemBuilder implements IItemBuildable {
 
-  // FIXME: Is it possible to for example override flags with an empty list? Don't think so...
-
   private final ItemStack baseItem;
   private final ItemMeta baseMeta;
 
@@ -413,29 +411,23 @@ public class ItemBuilder implements IItemBuildable {
     if (data.getName() != null)
       res.setName(data.getName());
 
-    if (data.getLore() != null) {
-      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_LORE))
-        res.overrideLore(data.getLore());
-      else
-        res.extendLore(data.getLore());
-    }
+    if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_LORE))
+      res.overrideLore(data.getLore());
+    else
+      res.extendLore(data.getLore());
 
-    if (data.getFlags() != null) {
-      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_FLAGS))
-        res.overrideFlags(data.getFlags());
-      else
-        res.extendFlags(data.getFlags());
-    }
+    if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_FLAGS))
+      res.overrideFlags(data.getFlags());
+    else
+      res.extendFlags(data.getFlags());
 
     if (data.getColor() != null)
       res.setColor(data.getColor());
 
-    if (data.getEnchantments().length > 0) {
-      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_ENCHANTMENTS))
-        res.overrideEnchantments(data.getEnchantments());
-      else
-        res.extendEnchantments(data.getEnchantments());
-    }
+    if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_ENCHANTMENTS))
+      res.overrideEnchantments(data.getEnchantments());
+    else
+      res.extendEnchantments(data.getEnchantments());
 
     if (data.getTextures() != null)
       res.setTextures(data.getTextures());
@@ -443,19 +435,15 @@ public class ItemBuilder implements IItemBuildable {
     if (data.getBaseEffect() != null)
       res.setBaseEffect(data.getBaseEffect());
 
-    if (data.getCustomEffects().length > 0) {
-      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_CUSTOM_EFFECTS))
-        res.overrideCustomEffects(data.getCustomEffects());
-      else
-        res.extendCustomEffects(data.getCustomEffects());
-    }
+    if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_CUSTOM_EFFECTS))
+      res.overrideCustomEffects(data.getCustomEffects());
+    else
+      res.extendCustomEffects(data.getCustomEffects());
 
-    if (data.getBannerPatterns().length > 0) {
-      if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_BANNER_PATTERNS))
-        res.overrideBannerPatterns(data.getBannerPatterns());
-      else
-        res.extendBannerPatterns(data.getBannerPatterns());
-    }
+    if (data.getPatchFlags().contains(EPatchFlag.OVERRIDE_BANNER_PATTERNS))
+      res.overrideBannerPatterns(data.getBannerPatterns());
+    else
+      res.extendBannerPatterns(data.getBannerPatterns());
 
     return res;
   }

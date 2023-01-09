@@ -30,6 +30,7 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import lombok.Getter;
 import me.blvckbytes.bbconfigmapper.ScalarType;
+import me.blvckbytes.bbconfigmapper.sections.CSAlways;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.bukkitevaluable.EPatchFlag;
@@ -70,7 +71,7 @@ public class ItemStackSection implements IConfigSection {
   private @Nullable ItemStackBaseEffectSection baseEffect;
   private @Nullable ItemStackCustomEffectSection[] customEffects;
   private @Nullable ItemStackBannerPatternSection[] bannerPatterns;
-  private @Nullable List<EPatchFlag> patchFlags;
+  private @CSAlways List<EPatchFlag> patchFlags;
 
   /**
    * Create an item stack builder from the parameters of this section
