@@ -60,12 +60,12 @@ public class ItemStackSection implements IConfigSection {
   private @Nullable BukkitEvaluable lore;
   private @Nullable BukkitEvaluable flags;
   private @Nullable BukkitEvaluable color;
-  private ItemStackEnchantmentSection[] enchantments;
+  private @Nullable ItemStackEnchantmentSection[] enchantments;
   private @Nullable BukkitEvaluable textures;
   private @Nullable ItemStackBaseEffectSection baseEffect;
-  private ItemStackCustomEffectSection[] customEffects;
-  private ItemStackBannerPatternSection[] bannerPatterns;
-  private List<EPatchFlag> patchFlags;
+  private @Nullable ItemStackCustomEffectSection[] customEffects;
+  private @Nullable ItemStackBannerPatternSection[] bannerPatterns;
+  private @Nullable List<EPatchFlag> patchFlags;
 
   /**
    * Create an item stack builder from the parameters of this section

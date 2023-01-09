@@ -138,16 +138,22 @@ public class ItemBuilder implements IItemBuildable {
     return this;
   }
 
-  public ItemBuilder extendEnchantments(ItemStackEnchantmentSection[] enchantments) {
+  public ItemBuilder extendEnchantments(@Nullable ItemStackEnchantmentSection[] enchantments) {
+    if (enchantments == null)
+      return this;
+
     this.enchantmentsOverride = false;
     Collections.addAll(this.enchantments, enchantments);
     return this;
   }
 
-  public ItemBuilder overrideEnchantments(ItemStackEnchantmentSection[] enchantments) {
+  public ItemBuilder overrideEnchantments(@Nullable ItemStackEnchantmentSection[] enchantments) {
     this.enchantmentsOverride = true;
     this.enchantments.clear();
-    Collections.addAll(this.enchantments, enchantments);
+
+    if (enchantments != null)
+      Collections.addAll(this.enchantments, enchantments);
+
     return this;
   }
 
@@ -186,16 +192,22 @@ public class ItemBuilder implements IItemBuildable {
     return this;
   }
 
-  public ItemBuilder extendCustomEffects(ItemStackCustomEffectSection[] effects) {
+  public ItemBuilder extendCustomEffects(@Nullable ItemStackCustomEffectSection[] effects) {
+    if (effects == null)
+      return this;
+
     this.customEffectsOverride = false;
     Collections.addAll(this.customEffects, effects);
     return this;
   }
 
-  public ItemBuilder overrideCustomEffects(ItemStackCustomEffectSection[] effects) {
+  public ItemBuilder overrideCustomEffects(@Nullable ItemStackCustomEffectSection[] effects) {
     this.customEffectsOverride = true;
     this.customEffects.clear();
-    Collections.addAll(this.customEffects, effects);
+
+    if (effects != null)
+      Collections.addAll(this.customEffects, effects);
+
     return this;
   }
 
@@ -207,16 +219,22 @@ public class ItemBuilder implements IItemBuildable {
     return this;
   }
 
-  public ItemBuilder extendBannerPatterns(ItemStackBannerPatternSection[] patterns) {
+  public ItemBuilder extendBannerPatterns(@Nullable ItemStackBannerPatternSection[] patterns) {
+    if (patterns == null)
+      return this;
+
     this.patternOverride = false;
     Collections.addAll(this.bannerPatterns, patterns);
     return this;
   }
 
-  public ItemBuilder overrideBannerPatterns(ItemStackBannerPatternSection[] patterns) {
+  public ItemBuilder overrideBannerPatterns(@Nullable ItemStackBannerPatternSection[] patterns) {
     this.patternOverride = true;
     this.bannerPatterns.clear();
-    Collections.addAll(this.bannerPatterns, patterns);
+
+    if (patterns != null)
+      Collections.addAll(this.bannerPatterns, patterns);
+
     return this;
   }
 
