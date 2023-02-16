@@ -53,8 +53,12 @@ public class BukkitEvaluable extends ConfigValue {
     enumCache = new HashMap<>();
   }
 
-  public BukkitEvaluable(@Nullable Object value, IExpressionEvaluator evaluator) {
+  public BukkitEvaluable(@Nullable Object value, @Nullable IExpressionEvaluator evaluator) {
     super(value, evaluator);
+  }
+
+  public static BukkitEvaluable of(@Nullable Object value) {
+    return new BukkitEvaluable(value, null);
   }
 
   public TextComponent asTextComponent(IEvaluationEnvironment environment) {
