@@ -31,6 +31,7 @@ import me.blvckbytes.bbconfigmapper.ConfigValue;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
+import me.blvckbytes.utilitytypes.FUnsafeTriFunction;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -92,7 +93,12 @@ public class BukkitEvaluable extends ConfigValue {
     return potion == null ? null : potion.getPotionEffectType();
   }
 
-  public @Nullable Color asColor(IEvaluationEnvironment environment) {
+  public @Nullable java.awt.Color asJavaColor(IEvaluationEnvironment environment) {
+    String stringValue = asString(environment);
+    return parseRGBNotation(stringValue, java.awt.Color::new);
+  }
+
+  public @Nullable Color asBukkitColor(IEvaluationEnvironment environment) {
     String stringValue = asString(environment);
 
     // Try to parse an enum name
@@ -100,8 +106,12 @@ public class BukkitEvaluable extends ConfigValue {
     if (enumValue != null)
       return enumValue;
 
+    return parseRGBNotation(stringValue, Color::fromRGB);
+  }
+
+  private <T> @Nullable T parseRGBNotation(String value, FUnsafeTriFunction<Integer, Integer, Integer, T, Exception> parser) {
     // Assume it's an RGB color
-    String[] parts = stringValue.split(" ");
+    String[] parts = value.split(" ");
 
     // Malformed
     if (parts.length != 3)
@@ -109,12 +119,12 @@ public class BukkitEvaluable extends ConfigValue {
 
     try {
       // Parse RGB parts
-      return Color.fromRGB(
+      return parser.apply(
         Integer.parseInt(parts[0]),
         Integer.parseInt(parts[1]),
         Integer.parseInt(parts[2])
       );
-    } catch (NumberFormatException e) {
+    } catch (Exception e) {
       return null;
     }
   }

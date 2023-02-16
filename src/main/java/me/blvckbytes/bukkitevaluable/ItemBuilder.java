@@ -298,7 +298,7 @@ public class ItemBuilder implements IItemBuildable {
     /////////////////////////////////// Color //////////////////////////////////
 
     if (color != null) {
-      Color bukkitColor = color.asColor(environment);
+      Color bukkitColor = color.asBukkitColor(environment);
 
       if (bukkitColor != null)
         applyColor(resMeta, bukkitColor);

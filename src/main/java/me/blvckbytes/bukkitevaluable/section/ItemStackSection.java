@@ -253,7 +253,7 @@ public class ItemStackSection implements IConfigSection {
     if (color == null)
       return true;
 
-    Color bukkitColor = color.asColor(environment);
+    Color bukkitColor = color.asBukkitColor(environment);
 
     if (color == null)
       return true;
