@@ -235,7 +235,7 @@ public class BukkitEvaluable extends ConfigValue {
   private static Optional<Object> performEnumCacheLookup(Class<?> type, String value) {
     Map<String, Object> constantCache = enumCache.get(type);
 
-    if (constantCache.containsKey(value))
+    if (constantCache != null && constantCache.containsKey(value))
       return Optional.of(constantCache.get(value));
 
     return Optional.empty();
