@@ -26,6 +26,7 @@ package me.blvckbytes.bukkitevaluable;
 
 import me.blvckbytes.bbconfigmapper.*;
 import me.blvckbytes.bukkitboilerplate.IFileHandler;
+import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
 import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
 import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
@@ -68,9 +69,32 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   }
 
   @Override
-  public @Nullable FValueConverter getConverterFor(Class<?> type) {
+  public @Nullable Class<?> getRequiredTypeFor(Class<?> type) {
     if (type == BukkitEvaluable.class)
-      return BukkitEvaluable::new;
+      return Object.class;
+    if (type == IItemBuildable.class)
+      return ItemStackSection.class;
+    return null;
+  }
+
+  @Override
+  public @Nullable FValueConverter getConverterFor(Class<?> type) {
+    if (type == BukkitEvaluable.class) {
+      return (value, evaluator) -> {
+        if (value == null)
+          return null;
+
+        return new BukkitEvaluable(value, evaluator);
+      };
+    }
+
+    if (type == IItemBuildable.class) {
+      return (value, evaluator) -> {
+        if (value == null)
+          return null;
+        return ((ItemStackSection) value).asItem();
+      };
+    }
     return null;
   }
 
