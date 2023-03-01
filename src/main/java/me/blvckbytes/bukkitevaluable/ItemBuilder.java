@@ -35,6 +35,7 @@ import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
+import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -77,6 +78,10 @@ public class ItemBuilder implements IItemBuildable {
   private final List<ItemStackEnchantmentSection> enchantments;
   private final List<ItemStackBannerPatternSection> bannerPatterns;
   private final List<BukkitEvaluable> flags;
+
+  public ItemBuilder(Material material, int amount) {
+    this(new ItemStack(material), amount);
+  }
 
   public ItemBuilder(ItemStack item, int amount) {
     if (item == null)
