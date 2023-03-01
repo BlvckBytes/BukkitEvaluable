@@ -228,7 +228,9 @@ public class BukkitEvaluable extends ConfigValue {
       }
     }
 
-    cacheEnumLookup(type, value, result);
+    if (result != null)
+      cacheEnumLookup(type, value, result);
+
     return (T) result;
   }
 
