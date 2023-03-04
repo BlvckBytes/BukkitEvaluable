@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>me.blvckbytes</groupId>
-            <artifactId>bbconfigmapper</artifactId>
+            <artifactId>BBConfigMapper</artifactId>
             <version>0.1</version>
         </dependency>
         <dependency>
