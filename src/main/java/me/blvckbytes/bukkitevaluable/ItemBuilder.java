@@ -32,7 +32,7 @@ import lombok.AllArgsConstructor;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.section.*;
 import me.blvckbytes.gpeee.GPEEE;
-import me.blvckbytes.gpeee.Tuple;
+import me.blvckbytes.utilitytypes.Tuple;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -343,7 +343,7 @@ public class ItemBuilder implements IItemBuildable {
     for (ItemStackEnchantmentSection enchantment : enchantments) {
       Tuple<Enchantment, Integer> enchantmentData = enchantment.asEnchantment(environment);
       if (enchantmentData != null)
-        resMeta.addEnchant(enchantmentData.getA(), enchantmentData.getB(), true);
+        resMeta.addEnchant(enchantmentData.a, enchantmentData.b, true);
     }
 
     ///////////////////////////////// Item Flags ////////////////////////////////

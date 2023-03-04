@@ -28,7 +28,7 @@ import lombok.Getter;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
-import me.blvckbytes.gpeee.Tuple;
+import me.blvckbytes.utilitytypes.Tuple;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.enchantments.Enchantment;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public class ItemStackEnchantmentSection implements IConfigSection {
     Integer level = this.level == null ? null : this.level.<Long>asScalar(ScalarType.LONG, environment).intValue();
 
     // Fall back to level 1 if not provided
-    return Tuple.of(enchantment, level == null ? 1 : level);
+    return new Tuple<>(enchantment, level == null ? 1 : level);
   }
 
   public boolean describesEnchantment(FEnchantmentPresenceChecker presenceChecker, IEvaluationEnvironment environment) {
