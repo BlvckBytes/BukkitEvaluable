@@ -24,7 +24,6 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
-import lombok.Getter;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
@@ -33,7 +32,6 @@ import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.enchantments.Enchantment;
 import org.jetbrains.annotations.Nullable;
 
-@Getter
 public class ItemStackEnchantmentSection implements IConfigSection {
 
   private @Nullable BukkitEvaluable enchantment;
@@ -51,6 +49,14 @@ public class ItemStackEnchantmentSection implements IConfigSection {
 
     // Fall back to level 1 if not provided
     return new Tuple<>(enchantment, level == null ? 1 : level);
+  }
+
+  public BukkitEvaluable getEnchantment() {
+    return enchantment;
+  }
+
+  public BukkitEvaluable getLevel() {
+    return level;
   }
 
   public boolean describesEnchantment(FEnchantmentPresenceChecker presenceChecker, IEvaluationEnvironment environment) {

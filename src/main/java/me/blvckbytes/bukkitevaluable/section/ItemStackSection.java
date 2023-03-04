@@ -28,7 +28,6 @@ import com.cryptomorin.xseries.XMaterial;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
-import lombok.Getter;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.CSAlways;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
@@ -53,7 +52,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Getter
 public class ItemStackSection implements IConfigSection {
 
   private @Nullable BukkitEvaluable amount;
@@ -85,6 +83,54 @@ public class ItemStackSection implements IConfigSection {
       .setTextures(textures)
       .setBaseEffect(baseEffect)
       .extendCustomEffects(customEffects);
+  }
+
+  public @Nullable BukkitEvaluable getAmount() {
+    return amount;
+  }
+
+  public @Nullable BukkitEvaluable getType() {
+    return type;
+  }
+
+  public @Nullable BukkitEvaluable getName() {
+    return name;
+  }
+
+  public @Nullable BukkitEvaluable getLore() {
+    return lore;
+  }
+
+  public @Nullable BukkitEvaluable getFlags() {
+    return flags;
+  }
+
+  public @Nullable BukkitEvaluable getColor() {
+    return color;
+  }
+
+  public ItemStackEnchantmentSection[] getEnchantments() {
+    return enchantments;
+  }
+
+  public @Nullable BukkitEvaluable getTextures() {
+    return textures;
+  }
+
+  public ItemStackBaseEffectSection getBaseEffect() {
+    return baseEffect;
+  }
+
+  public ItemStackBannerPatternSection[] getBannerPatterns() {
+    return bannerPatterns;
+  }
+
+  public ItemStackCustomEffectSection[] getCustomEffects() {
+    return customEffects;
+  }
+
+  public List<EPatchFlag> getPatchFlags() {
+    return patchFlags;
   }
 
   private boolean addMismatchAndPossiblyBreak(

@@ -24,7 +24,6 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
-import lombok.Getter;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
@@ -33,7 +32,6 @@ import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.jetbrains.annotations.Nullable;
 
-@Getter
 public class ItemStackBannerPatternSection implements IConfigSection {
 
   private @Nullable BukkitEvaluable pattern;
@@ -48,6 +46,14 @@ public class ItemStackBannerPatternSection implements IConfigSection {
       return null;
 
     return new Pattern(color, pattern);
+  }
+
+  public BukkitEvaluable getPattern() {
+    return pattern;
+  }
+
+  public BukkitEvaluable getColor() {
+    return color;
   }
 
   public boolean describesPattern(Pattern pattern, IEvaluationEnvironment environment) {

@@ -24,7 +24,6 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
-import lombok.Getter;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
@@ -33,7 +32,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.Nullable;
 
-@Getter
 public class ItemStackCustomEffectSection implements IConfigSection {
 
   private @Nullable BukkitEvaluable effect;

@@ -27,8 +27,6 @@ package me.blvckbytes.bukkitevaluable;
 import com.cryptomorin.xseries.XMaterial;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.section.*;
 import me.blvckbytes.gpeee.GPEEE;
@@ -52,7 +50,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemBuilder implements IItemBuildable {
 
   private final ItemStack baseItem;
@@ -78,6 +75,46 @@ public class ItemBuilder implements IItemBuildable {
   private final List<ItemStackEnchantmentSection> enchantments;
   private final List<ItemStackBannerPatternSection> bannerPatterns;
   private final List<BukkitEvaluable> flags;
+
+  private ItemBuilder(
+    ItemStack baseItem,
+    ItemMeta baseMeta,
+    boolean loreOverride,
+    boolean flagsOverride,
+    boolean enchantmentsOverride,
+    boolean customEffectsOverride,
+    boolean patternOverride,
+    @Nullable BukkitEvaluable name,
+    List<BukkitEvaluable> loreBlocks,
+    @Nullable BukkitEvaluable amount,
+    @Nullable BukkitEvaluable type,
+    @Nullable BukkitEvaluable color,
+    @Nullable BukkitEvaluable textures,
+    @Nullable ItemStackBaseEffectSection baseEffect,
+    List<ItemStackCustomEffectSection> customEffects,
+    List<ItemStackEnchantmentSection> enchantments,
+    List<ItemStackBannerPatternSection> bannerPatterns,
+    List<BukkitEvaluable> flags
+  ) {
+    this.baseItem = new ItemStack(baseItem);
+    this.baseMeta = baseMeta.clone();
+    this.loreOverride = loreOverride;
+    this.flagsOverride = flagsOverride;
+    this.enchantmentsOverride = enchantmentsOverride;
+    this.customEffectsOverride = customEffectsOverride;
+    this.patternOverride = patternOverride;
+    this.name = name;
+    this.loreBlocks = new ArrayList<>(loreBlocks);
+    this.amount = amount;
+    this.type = type;
+    this.color = color;
+    this.textures = textures;
+    this.baseEffect = baseEffect;
+    this.customEffects = new ArrayList<>(customEffects);
+    this.enchantments = new ArrayList<>(enchantments);
+    this.bannerPatterns = new ArrayList<>(bannerPatterns);
+    this.flags = new ArrayList<>(flags);
+  }
 
   public ItemBuilder(Material material, int amount) {
     this(new ItemStack(material), amount);
@@ -382,24 +419,24 @@ public class ItemBuilder implements IItemBuildable {
   @Override
   public ItemBuilder copy() {
     return new ItemBuilder(
-      new ItemStack(baseItem),
-      baseMeta.clone(),
+      baseItem,
+      baseMeta,
       loreOverride,
       flagsOverride,
       enchantmentsOverride,
       customEffectsOverride,
       patternOverride,
       name,
-      new ArrayList<>(loreBlocks),
+      loreBlocks,
       amount,
       type,
       color,
       textures,
       baseEffect,
-      new ArrayList<>(customEffects),
-      new ArrayList<>(enchantments),
-      new ArrayList<>(bannerPatterns),
-      new ArrayList<>(flags)
+      customEffects,
+      enchantments,
+      bannerPatterns,
+      flags
     );
   }
 

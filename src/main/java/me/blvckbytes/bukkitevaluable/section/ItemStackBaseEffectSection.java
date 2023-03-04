@@ -24,7 +24,6 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
-import lombok.Getter;
 import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
@@ -32,7 +31,6 @@ import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.Nullable;
 
-@Getter
 public class ItemStackBaseEffectSection implements IConfigSection {
 
   private @Nullable BukkitEvaluable type;
@@ -51,6 +49,18 @@ public class ItemStackBaseEffectSection implements IConfigSection {
     // Potions cannot be both extended and upgraded at the same
     // time, focus the priority on the upgraded flag
     return new PotionData(type, !_upgraded && _extended, _upgraded);
+  }
+
+  public BukkitEvaluable getType() {
+    return type;
+  }
+
+  public Boolean getExtended() {
+    return extended;
+  }
+
+  public Boolean getUpgraded() {
+    return upgraded;
   }
 
   public boolean describesData(PotionData data, IEvaluationEnvironment environment) {
