@@ -25,7 +25,9 @@
 package me.blvckbytes.bukkitevaluable;
 
 import me.blvckbytes.bbconfigmapper.*;
+import me.blvckbytes.bukkitboilerplate.ELogLevel;
 import me.blvckbytes.bukkitboilerplate.IFileHandler;
+import me.blvckbytes.bukkitboilerplate.ILogger;
 import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
 import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
@@ -33,9 +35,7 @@ import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.utilitytypes.Tuple;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,16 +45,19 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
   private final Map<String, Tuple<IExpressionEvaluator, IConfigMapper>> mapperByPath;
   private final GPEEELogRedirect gpeeeLogger;
+  private final ILogger logger;
   private final IFileHandler fileHandler;
 
   public ConfigManager(
     IConfigPathsProvider pathsProvider,
     GPEEELogRedirect gpeeeLogger,
+    ILogger logger,
     IFileHandler fileHandler
   ) throws Exception {
     this.mapperByPath = new HashMap<>();
     this.fileHandler = fileHandler;
     this.gpeeeLogger = gpeeeLogger;
+    this.logger = logger;
     this.loadConfigs(pathsProvider.getConfigPaths());
   }
 
@@ -103,9 +106,45 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
       loadConfig(path);
   }
 
+  private int extendConfig(String path, YamlConfig config) throws Exception {
+    try (
+      InputStream resourceStream = this.fileHandler.getResource(path)
+    ) {
+      if (resourceStream == null)
+        throw new IllegalStateException("Could not load resource file at " + path);
+
+      try (
+        InputStreamReader resourceReader = new InputStreamReader(resourceStream);
+      ) {
+        YamlConfig resourceConfig = new YamlConfig(null, this.gpeeeLogger, null);
+        resourceConfig.load(resourceReader);
+        return config.extendMissingKeys(resourceConfig);
+      }
+    }
+  }
+
+  private void saveConfig(YamlConfig config, String path) throws Exception {
+    try (
+      FileOutputStream outputStream = this.fileHandler.openForWriting(path);
+    ) {
+      if (outputStream == null)
+        throw new IllegalStateException("Could not open path " + path + " for writing");
+
+      try (
+        OutputStreamWriter outputWriter = new OutputStreamWriter(outputStream);
+      ) {
+        config.save(outputWriter);
+      }
+    }
+  }
+
   private void loadConfig(String path) throws Exception {
-    if (!this.fileHandler.doesFileExist(path))
+    boolean hasBeenCreated = false;
+
+    if (!this.fileHandler.doesFileExist(path)) {
       this.fileHandler.saveResource(path);
+      hasBeenCreated = true;
+    }
 
     try (
       FileInputStream inputStream = this.fileHandler.openForReading(path);
@@ -120,6 +159,15 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
         InputStreamReader streamReader = new InputStreamReader(inputStream);
       ) {
         config.load(streamReader);
+      }
+
+      if (!hasBeenCreated) {
+        int numExtendedKeys = extendConfig(path, config);
+
+        if (numExtendedKeys > 0) {
+          this.logger.log(ELogLevel.INFO, "Extended " + numExtendedKeys + " new keys on the configuration " + path);
+          saveConfig(config, path);
+        }
       }
 
       Object lutValue = config.get("lut");

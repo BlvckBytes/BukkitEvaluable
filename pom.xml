@@ -19,13 +19,11 @@
             <groupId>me.blvckbytes</groupId>
             <artifactId>GPEEE</artifactId>
             <version>0.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>me.blvckbytes</groupId>
             <artifactId>BBConfigMapper</artifactId>
             <version>0.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -42,7 +40,6 @@
             <groupId>me.blvckbytes</groupId>
             <artifactId>BukkitBoilerplate</artifactId>
             <version>0.1</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
