@@ -25,9 +25,7 @@
 package me.blvckbytes.bukkitevaluable;
 
 import me.blvckbytes.bbconfigmapper.*;
-import me.blvckbytes.bukkitboilerplate.ELogLevel;
 import me.blvckbytes.bukkitboilerplate.IFileHandler;
-import me.blvckbytes.bukkitboilerplate.ILogger;
 import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
 import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
@@ -38,25 +36,24 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
   private static final String EXPRESSION_MARKER_SUFFIX = "$";
 
   private final Map<String, Tuple<IExpressionEvaluator, IConfigMapper>> mapperByPath;
-  private final GPEEELogRedirect gpeeeLogger;
-  private final ILogger logger;
+  private final Logger logger;
   private final IFileHandler fileHandler;
 
   public ConfigManager(
     IConfigPathsProvider pathsProvider,
-    GPEEELogRedirect gpeeeLogger,
-    ILogger logger,
+    Logger logger,
     IFileHandler fileHandler
   ) throws Exception {
     this.mapperByPath = new HashMap<>();
     this.fileHandler = fileHandler;
-    this.gpeeeLogger = gpeeeLogger;
     this.logger = logger;
     this.loadConfigs(pathsProvider.getConfigPaths());
   }
@@ -116,7 +113,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
       try (
         InputStreamReader resourceReader = new InputStreamReader(resourceStream);
       ) {
-        YamlConfig resourceConfig = new YamlConfig(null, this.gpeeeLogger, null);
+        YamlConfig resourceConfig = new YamlConfig(null, this.logger, null);
         resourceConfig.load(resourceReader);
         return config.extendMissingKeys(resourceConfig);
       }
@@ -152,8 +149,8 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
       if (inputStream == null)
         throw new IllegalStateException("Could not load configuration file at " + path);
 
-      GPEEE evaluator = new GPEEE(gpeeeLogger);
-      YamlConfig config = new YamlConfig(evaluator, this.gpeeeLogger, EXPRESSION_MARKER_SUFFIX);
+      GPEEE evaluator = new GPEEE(logger);
+      YamlConfig config = new YamlConfig(evaluator, this.logger, EXPRESSION_MARKER_SUFFIX);
 
       try (
         InputStreamReader streamReader = new InputStreamReader(inputStream);
@@ -165,7 +162,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
         int numExtendedKeys = extendConfig(path, config);
 
         if (numExtendedKeys > 0) {
-          this.logger.log(ELogLevel.INFO, "Extended " + numExtendedKeys + " new keys on the configuration " + path);
+          this.logger.log(Level.INFO, "Extended " + numExtendedKeys + " new keys on the configuration " + path);
           saveConfig(config, path);
         }
       }
@@ -179,7 +176,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
       evaluator.setBaseEnvironment(baseEnvironment);
 
-      ConfigMapper mapper = new ConfigMapper(config, gpeeeLogger, evaluator, this);
+      ConfigMapper mapper = new ConfigMapper(config, this.logger, evaluator, this);
       mapperByPath.put(path.toLowerCase(), new Tuple<>(evaluator, mapper));
     }
   }
