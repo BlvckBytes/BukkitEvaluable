@@ -26,9 +26,12 @@ package me.blvckbytes.bukkitevaluable;
 
 import me.blvckbytes.bbconfigmapper.*;
 import me.blvckbytes.bukkitboilerplate.IFileHandler;
+import me.blvckbytes.bukkitevaluable.functions.Base64ToSkinUrlFunction;
+import me.blvckbytes.bukkitevaluable.functions.SkinUrlToBase64Function;
 import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
 import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
+import me.blvckbytes.gpeee.functions.AExpressionFunction;
 import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.utilitytypes.Tuple;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +50,10 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   private final Logger logger;
   private final IFileHandler fileHandler;
 
+  private final AExpressionFunction
+    base64ToSkinUrlFunction,
+    skinUrlToBase64Function;
+
   public ConfigManager(
     IConfigPathsProvider pathsProvider,
     Logger logger,
@@ -55,6 +62,10 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
     this.mapperByPath = new HashMap<>();
     this.fileHandler = fileHandler;
     this.logger = logger;
+
+    this.base64ToSkinUrlFunction = new Base64ToSkinUrlFunction();
+    this.skinUrlToBase64Function = new SkinUrlToBase64Function();
+
     this.loadConfigs(pathsProvider.getConfigPaths());
   }
 
@@ -172,6 +183,8 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
       EvaluationEnvironmentBuilder baseEnvironment = new EvaluationEnvironmentBuilder()
         .withStaticVariable("lut", lut)
+        .withFunction("base64_to_skin_url", base64ToSkinUrlFunction)
+        .withFunction("skin_url_to_base64", skinUrlToBase64Function)
         .withValueInterpreter(BukkitValueInterpreter.getInstance());
 
       evaluator.setBaseEnvironment(baseEnvironment);
