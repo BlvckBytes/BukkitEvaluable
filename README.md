@@ -29,6 +29,7 @@ many bukkit type interpretations and support for the use of `&`-colors.
 - [Functions](#functions)
   - [base64_to_skin_url](#base64_to_skin_url)
   - [skin_url_to_base64](#skin_url_to_base64)
+- [Lookup-Table (LUT) section](#lookup-table-(lut)-section)
 
 ## ItemStack Section
 
@@ -196,3 +197,23 @@ Decodes the passed base64 encoded string, parses it as JSON and returns the extr
 Creates the json string required to provide skin texture urls and returns the base64 encoded value of that json string.
 
 `skin_url_to_base64("http://textures.minecraft.net/texture/118a2dd5bef0b073b13271a7eeb9cfea7afe8593c57a93821e43175572461812")` -> `"eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE4YTJkZDViZWYwYjA3M2IxMzI3MWE3ZWViOWNmZWE3YWZlODU5M2M1N2E5MzgyMWU0MzE3NTU3MjQ2MTgxMiJ9fX0="`
+
+## Lookup-Table (LUT) section
+
+The top level section named `"lut"` is a standard section in every configuration file and serves as a central store for
+constants and duplicate data in general. It's of type **map** and is available as a static variable by the name `"lut"` within
+the base (and thus every) evaluation environment. As this table is bound at the evaluation level, it can be specified at the
+bottom of the file and still be used anywhere, in contrast to yaml anchors.
+
+Here's a shortened excerpt, used as an example:
+
+```yaml
+commonItems:
+  previousPage:
+    type: PLAYER_HEAD
+    textures$: 'lut[if current_page > 1 then "ARROW_LEFT" else "ARROW_LEFT_RED"]'
+
+lut:
+  ARROW_LEFT: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE4YTJkZDViZWYwYjA3M2IxMzI3MWE3ZWViOWNmZWE3YWZlODU5M2M1N2E5MzgyMWU0MzE3NTU3MjQ2MTgxMiJ9fX0='
+  ARROW_LEFT_RED: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWRmNWMyZjg5M2JkM2Y4OWNhNDA3MDNkZWQzZTQyZGQwZmJkYmE2ZjY3NjhjODc4OWFmZGZmMWZhNzhiZjYifX19'
+```
