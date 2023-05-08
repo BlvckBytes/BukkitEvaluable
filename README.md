@@ -26,6 +26,9 @@ many bukkit type interpretations and support for the use of `&`-colors.
     - [bannerPatterns](#bannerpatterns)
       - [banner pattern section](#banner-pattern-section)
     - [patchFlags](#patchflags)
+- [Functions](#functions)
+  - [base64_to_skin_url](#base64_to_skin_url)
+  - [skin_url_to_base64](#skin_url_to_base64)
 
 ## ItemStack Section
 
@@ -177,3 +180,19 @@ Active patch flags when this item-stack section is being used to patch (customiz
 interpreted as a set of [Patch Flags](https://github.com/BlvckBytes/BukkitEvaluable/blob/main/src/main/java/me/blvckbytes/bukkitevaluable/EPatchFlag.java).
 
 These are override true flags, so if they're specified, the representing property is being **overridden**. If it's not specified, it's **extended**.
+
+## Functions
+
+This library adds a few functions to the base evaluation environment of all retrievable values:
+
+### base64_to_skin_url
+
+Decodes the passed base64 encoded string, parses it as JSON and returns the extracted textures.SKIN.url string value.
+
+`base64_to_skin_url("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE4YTJkZDViZWYwYjA3M2IxMzI3MWE3ZWViOWNmZWE3YWZlODU5M2M1N2E5MzgyMWU0MzE3NTU3MjQ2MTgxMiJ9fX0=")` -> `"http://textures.minecraft.net/texture/118a2dd5bef0b073b13271a7eeb9cfea7afe8593c57a93821e43175572461812"`
+
+### skin_url_to_base64
+
+Creates the json string required to provide skin texture urls and returns the base64 encoded value of that json string.
+
+`skin_url_to_base64("http://textures.minecraft.net/texture/118a2dd5bef0b073b13271a7eeb9cfea7afe8593c57a93821e43175572461812")` -> `"eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE4YTJkZDViZWYwYjA3M2IxMzI3MWE3ZWViOWNmZWE3YWZlODU5M2M1N2E5MzgyMWU0MzE3NTU3MjQ2MTgxMiJ9fX0="`
