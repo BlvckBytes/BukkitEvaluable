@@ -153,6 +153,31 @@ public class BukkitEvaluable extends ConfigValue {
     return constants;
   }
 
+  /**
+   * Stringifies this component and possibly appends other, also stringified, components to it's tail
+   * @param environment Optional environment to evaluate in
+   * @param others Other evaluables to also stringify and append
+   */
+  public String stringify(@Nullable IEvaluationEnvironment environment, BukkitEvaluable... others) {
+    String self = asScalar(ScalarType.STRING, environment);
+
+    if (others.length == 0)
+      return self;
+
+    StringJoiner joiner = new StringJoiner("");
+
+    joiner.add(self);
+
+    for (BukkitEvaluable evaluable : others)
+      joiner.add(evaluable.asScalar(ScalarType.STRING, environment));
+
+    return joiner.toString();
+  }
+
+  public String stringify(BukkitEvaluable... others) {
+    return stringify(null, others);
+  }
+
   //=========================================================================//
   //                                Overrides                                //
   //=========================================================================//
