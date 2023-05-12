@@ -8,6 +8,22 @@ many bukkit type interpretations and support for the use of `&`-colors.
 
 <!-- #toc -->
 
+## Permissions Section
+
+All permission nodes of a plugin can be configured to a custom value, based on a unique internal key.
+
+### Full Example
+
+```yaml
+permissions:
+  # permission: The missing permission node string
+  missingMessage$: 'lut["prefix"] & "&7You\sre lacking the permission &c" & permission'
+  # Map of internal name to custom configurable node value
+  nodes:
+    open: headcatalog.open
+    request: headcatalog.request
+```
+
 ## ItemStack Section
 
 The item-stack section can be used to either define a custom item from scratch, patch another item description in order

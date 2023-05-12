@@ -7,8 +7,10 @@ instances and adds value converters, like the item-buildable as well as the bukk
 many bukkit type interpretations and support for the use of `&`-colors.
 
 ## Table of Contents
+- [Permissions Section](#permissions-section)
+  - [Full Example](#full-example-1)
 - [ItemStack Section](#itemstack-section)
-  - [Full Example](#full-example)
+  - [Full Example](#full-example-2)
   - [Bukkit Color Value](#bukkit-color-value)
   - [Available Keys](#available-keys)
     - [amount](#amount)
@@ -30,6 +32,22 @@ many bukkit type interpretations and support for the use of `&`-colors.
   - [base64_to_skin_url](#base64_to_skin_url)
   - [skin_url_to_base64](#skin_url_to_base64)
 - [Lookup-Table (LUT) section](#lookup-table-(lut)-section)
+
+## Permissions Section
+
+All permission nodes of a plugin can be configured to a custom value, based on a unique internal key.
+
+### Full Example
+
+```yaml
+permissions:
+  # permission: The missing permission node string
+  missingMessage$: 'lut["prefix"] & "&7You\sre lacking the permission &c" & permission'
+  # Map of internal name to custom configurable node value
+  nodes:
+    open: headcatalog.open
+    request: headcatalog.request
+```
 
 ## ItemStack Section
 
