@@ -8,6 +8,10 @@ many bukkit type interpretations and support for the use of `&`-colors.
 
 <!-- #toc -->
 
+## Expression Marker Suffix
+
+In order to signal to the system that a key's value is an evaluable expression, add a trailing dollar sign to it's name (`$`).
+
 ## Permissions Section
 
 All permission nodes of a plugin can be configured to a custom value, based on a unique internal key.

@@ -7,6 +7,7 @@ instances and adds value converters, like the item-buildable as well as the bukk
 many bukkit type interpretations and support for the use of `&`-colors.
 
 ## Table of Contents
+- [Expression Marker Suffix](#expression-marker-suffix)
 - [Permissions Section](#permissions-section)
   - [Full Example](#full-example-1)
 - [ItemStack Section](#itemstack-section)
@@ -32,6 +33,10 @@ many bukkit type interpretations and support for the use of `&`-colors.
   - [base64_to_skin_url](#base64_to_skin_url)
   - [skin_url_to_base64](#skin_url_to_base64)
 - [Lookup-Table (LUT) section](#lookup-table-(lut)-section)
+
+## Expression Marker Suffix
+
+In order to signal to the system that a key's value is an evaluable expression, add a trailing dollar sign to it's name (`$`).
 
 ## Permissions Section
 
