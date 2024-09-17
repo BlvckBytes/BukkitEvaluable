@@ -29,6 +29,7 @@ import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XPotion;
 import me.blvckbytes.bbconfigmapper.ConfigValue;
 import me.blvckbytes.bbconfigmapper.ScalarType;
+import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import me.blvckbytes.utilitytypes.FUnsafeTriFunction;
@@ -155,10 +156,10 @@ public class BukkitEvaluable extends ConfigValue {
 
   /**
    * Stringifies this component and possibly appends other, also stringified, components to it's tail
-   * @param environment Optional environment to evaluate in
+   * @param environment Environment to evaluate in
    * @param others Other evaluables to also stringify and append
    */
-  public String stringify(@Nullable IEvaluationEnvironment environment, BukkitEvaluable... others) {
+  public String stringify(IEvaluationEnvironment environment, BukkitEvaluable... others) {
     String self = asScalar(ScalarType.STRING, environment);
 
     if (others.length == 0)
@@ -175,7 +176,7 @@ public class BukkitEvaluable extends ConfigValue {
   }
 
   public String stringify(BukkitEvaluable... others) {
-    return stringify(null, others);
+    return stringify(GPEEE.EMPTY_ENVIRONMENT, others);
   }
 
   //=========================================================================//
