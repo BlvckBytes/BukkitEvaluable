@@ -25,15 +25,15 @@
 package me.blvckbytes.bukkitevaluable;
 
 import me.blvckbytes.bbconfigmapper.*;
-import me.blvckbytes.bukkitboilerplate.IFileHandler;
 import me.blvckbytes.bukkitevaluable.functions.Base64ToSkinUrlFunction;
 import me.blvckbytes.bukkitevaluable.functions.SkinUrlToBase64Function;
 import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
 import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
+import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.functions.AExpressionFunction;
 import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
-import me.blvckbytes.utilitytypes.Tuple;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -48,25 +48,19 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
   private final Map<String, Tuple<IExpressionEvaluator, IConfigMapper>> mapperByPath;
   private final Logger logger;
-  private final IFileHandler fileHandler;
+  private final Plugin plugin;
 
   private final AExpressionFunction
     base64ToSkinUrlFunction,
     skinUrlToBase64Function;
 
-  public ConfigManager(
-    IConfigPathsProvider pathsProvider,
-    Logger logger,
-    IFileHandler fileHandler
-  ) throws Exception {
+  public ConfigManager(Plugin plugin) {
     this.mapperByPath = new HashMap<>();
-    this.fileHandler = fileHandler;
-    this.logger = logger;
+    this.plugin = plugin;
+    this.logger = plugin.getLogger();
 
     this.base64ToSkinUrlFunction = new Base64ToSkinUrlFunction();
     this.skinUrlToBase64Function = new SkinUrlToBase64Function();
-
-    this.loadConfigs(pathsProvider.getConfigPaths());
   }
 
   @Override
@@ -83,40 +77,27 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   public @Nullable Class<?> getRequiredTypeFor(Class<?> type) {
     if (type == BukkitEvaluable.class)
       return Object.class;
+
     if (type == IItemBuildable.class)
       return ItemStackSection.class;
+
     return null;
   }
 
   @Override
   public @Nullable FValueConverter getConverterFor(Class<?> type) {
-    if (type == BukkitEvaluable.class) {
-      return (value, evaluator) -> {
-        if (value == null)
-          return null;
+    if (type == BukkitEvaluable.class)
+      return BukkitEvaluable::new;
 
-        return new BukkitEvaluable(value, evaluator);
-      };
-    }
+    if (type == IItemBuildable.class)
+      return (value, evaluator) -> ((ItemStackSection) value).asItem();
 
-    if (type == IItemBuildable.class) {
-      return (value, evaluator) -> {
-        if (value == null)
-          return null;
-        return ((ItemStackSection) value).asItem();
-      };
-    }
     return null;
-  }
-
-  private void loadConfigs(String[] paths) throws Exception {
-    for (String path : paths)
-      loadConfig(path);
   }
 
   private int extendConfig(String path, YamlConfig config) throws Exception {
     try (
-      InputStream resourceStream = this.fileHandler.getResource(path)
+      InputStream resourceStream = this.plugin.getResource(path)
     ) {
       if (resourceStream == null)
         throw new IllegalStateException("Could not load resource file at " + path);
@@ -132,42 +113,45 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   }
 
   private void saveConfig(YamlConfig config, String path) throws Exception {
-    try (
-      FileOutputStream outputStream = this.fileHandler.openForWriting(path);
-    ) {
-      if (outputStream == null)
-        throw new IllegalStateException("Could not open path " + path + " for writing");
+    File file = new File(plugin.getDataFolder(), path);
 
-      try (
-        OutputStreamWriter outputWriter = new OutputStreamWriter(outputStream);
-      ) {
-        config.save(outputWriter);
-      }
+    if (file.exists() && !file.isFile())
+      throw new IllegalStateException("Tried to write file; unexpected directory at " + file);
+
+    if (!file.getParentFile().exists()) {
+      if (!file.getParentFile().mkdirs())
+        throw new IllegalStateException("Could not create parent directories for " + file);
+    }
+
+    try (
+      FileOutputStream outputStream = new FileOutputStream(file);
+      OutputStreamWriter outputWriter = new OutputStreamWriter(outputStream);
+    ) {
+      config.save(outputWriter);
     }
   }
 
-  private void loadConfig(String path) throws Exception {
+  public ConfigMapper loadConfig(String path) throws Exception {
     boolean hasBeenCreated = false;
 
-    if (!this.fileHandler.doesFileExist(path)) {
-      this.fileHandler.saveResource(path);
+    File file = new File(plugin.getDataFolder(), path);
+
+    if (file.exists()) {
+      if (file.isDirectory())
+        throw new IllegalStateException("Tried to read file; unexpected directory at " + file);
+    } else {
+      this.plugin.saveResource(path, true);
       hasBeenCreated = true;
     }
 
     try (
-      FileInputStream inputStream = this.fileHandler.openForReading(path);
+      FileInputStream inputStream = new FileInputStream(file);
+      InputStreamReader streamReader = new InputStreamReader(inputStream);
     ) {
-      if (inputStream == null)
-        throw new IllegalStateException("Could not load configuration file at " + path);
-
       GPEEE evaluator = new GPEEE(logger);
       YamlConfig config = new YamlConfig(evaluator, this.logger, EXPRESSION_MARKER_SUFFIX);
 
-      try (
-        InputStreamReader streamReader = new InputStreamReader(inputStream);
-      ) {
-        config.load(streamReader);
-      }
+      config.load(streamReader);
 
       if (!hasBeenCreated) {
         int numExtendedKeys = extendConfig(path, config);
@@ -191,6 +175,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
       ConfigMapper mapper = new ConfigMapper(config, this.logger, evaluator, this);
       mapperByPath.put(path.toLowerCase(), new Tuple<>(evaluator, mapper));
+      return mapper;
     }
   }
 }

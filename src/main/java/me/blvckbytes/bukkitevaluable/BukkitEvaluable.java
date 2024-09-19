@@ -32,7 +32,6 @@ import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
-import me.blvckbytes.utilitytypes.FUnsafeTriFunction;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -47,6 +46,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class BukkitEvaluable extends ConfigValue {
+
+  public static final BukkitEvaluable UNDEFINED_STRING = BukkitEvaluable.of("undefined");
 
   private static final Map<Class<?>, Map<String, Object>> enumCache;
 
@@ -75,7 +76,6 @@ public class BukkitEvaluable extends ConfigValue {
     return xEnchantment == null ? null : xEnchantment.getEnchant();
   }
 
-  @SuppressWarnings("deprecation")
   public @Nullable PotionType asPotionType(IEvaluationEnvironment environment) {
     String stringValue = asString(environment);
 
@@ -185,7 +185,7 @@ public class BukkitEvaluable extends ConfigValue {
 
   @Override
   @SuppressWarnings("unchecked")
-  protected <T> T interpretScalar(@Nullable Object input, ScalarType type, IEvaluationEnvironment env) {
+  protected <T> T interpretScalar(@Nullable Object input, ScalarType<T> type, IEvaluationEnvironment env) {
     T scalar = super.interpretScalar(input, type, env);
 
     if (scalar instanceof String)

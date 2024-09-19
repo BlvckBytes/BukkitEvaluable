@@ -30,7 +30,7 @@ import com.mojang.authlib.properties.Property;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.section.*;
 import me.blvckbytes.gpeee.GPEEE;
-import me.blvckbytes.utilitytypes.Tuple;
+import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
 import org.bukkit.Material;

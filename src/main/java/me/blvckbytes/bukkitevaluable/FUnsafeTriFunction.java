@@ -24,8 +24,9 @@
 
 package me.blvckbytes.bukkitevaluable;
 
-public interface IConfigPathsProvider {
+@FunctionalInterface
+public interface FUnsafeTriFunction<I1, I2, I3, O, E extends Throwable> {
 
-  String[] getConfigPaths();
+  O apply(I1 i1, I2 i2, I3 i3) throws E;
 
 }

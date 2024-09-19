@@ -36,11 +36,6 @@
             <artifactId>XSeries</artifactId>
             <version>11.2.1</version>
         </dependency>
-        <dependency>
-            <groupId>me.blvckbytes</groupId>
-            <artifactId>BukkitBoilerplate</artifactId>
-            <version>0.1</version>
-        </dependency>
     </dependencies>
 
 </project>

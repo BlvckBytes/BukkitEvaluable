@@ -26,9 +26,14 @@ package me.blvckbytes.bukkitevaluable;
 
 import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 public interface IItemBuildable {
+
+  static ItemBuilder makeUndefined() {
+    return new ItemBuilder(Material.BARRIER, 1).setName(BukkitEvaluable.UNDEFINED_STRING);
+  }
 
   /**
    * Build the item by evaluating it's templates in a specific evaluation environment
