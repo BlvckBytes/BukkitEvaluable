@@ -24,18 +24,23 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
-import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
+import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
+import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.Nullable;
 
-public class ItemStackBaseEffectSection implements IConfigSection {
+public class ItemStackBaseEffectSection extends AConfigSection {
 
   private @Nullable BukkitEvaluable type;
   private @Nullable Boolean extended;
   private @Nullable Boolean upgraded;
+
+  public ItemStackBaseEffectSection(EvaluationEnvironmentBuilder baseEnvironment) {
+    super(baseEnvironment);
+  }
 
   public @Nullable PotionData asData(IEvaluationEnvironment environment) {
     boolean _upgraded = upgraded != null && upgraded;

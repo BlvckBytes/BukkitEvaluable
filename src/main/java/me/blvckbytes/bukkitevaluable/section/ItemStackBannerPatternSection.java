@@ -24,18 +24,23 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
-import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
+import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
+import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.DyeColor;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.jetbrains.annotations.Nullable;
 
-public class ItemStackBannerPatternSection implements IConfigSection {
+public class ItemStackBannerPatternSection extends AConfigSection {
 
   private @Nullable BukkitEvaluable pattern;
   private @Nullable BukkitEvaluable color;
+
+  public ItemStackBannerPatternSection(EvaluationEnvironmentBuilder baseEnvironment) {
+    super(baseEnvironment);
+  }
 
   public @Nullable Pattern asPattern(IEvaluationEnvironment environment) {
     PatternType pattern = this.pattern == null ? null : this.pattern.asEnumerationConstant(PatternType.class, environment);

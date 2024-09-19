@@ -25,19 +25,23 @@
 package me.blvckbytes.bukkitevaluable.section;
 
 import me.blvckbytes.bbconfigmapper.sections.CSAlways;
-import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
+import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import org.bukkit.entity.Player;
 
 import java.util.Map;
 
-public class PermissionsSection implements IConfigSection {
+public class PermissionsSection extends AConfigSection {
 
   private BukkitEvaluable missingMessage;
 
   @CSAlways
   private Map<String, String> nodes;
+
+  public PermissionsSection(EvaluationEnvironmentBuilder baseEnvironment) {
+    super(baseEnvironment);
+  }
 
   public boolean hasPermission(Player player, IPermissionNode node) {
     return player.hasPermission(resolveNode(node));

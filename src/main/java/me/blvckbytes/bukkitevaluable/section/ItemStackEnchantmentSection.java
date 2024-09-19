@@ -25,17 +25,22 @@
 package me.blvckbytes.bukkitevaluable.section;
 
 import me.blvckbytes.bbconfigmapper.ScalarType;
-import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
+import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
-import me.blvckbytes.utilitytypes.Tuple;
+import me.blvckbytes.gpeee.Tuple;
+import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.enchantments.Enchantment;
 import org.jetbrains.annotations.Nullable;
 
-public class ItemStackEnchantmentSection implements IConfigSection {
+public class ItemStackEnchantmentSection extends AConfigSection {
 
   private @Nullable BukkitEvaluable enchantment;
   private @Nullable BukkitEvaluable level;
+
+  public ItemStackEnchantmentSection(EvaluationEnvironmentBuilder baseEnvironment) {
+    super(baseEnvironment);
+  }
 
   public @Nullable Tuple<Enchantment, Integer> asEnchantment(IEvaluationEnvironment environment) {
     // Try to parse the enchantment, if provided

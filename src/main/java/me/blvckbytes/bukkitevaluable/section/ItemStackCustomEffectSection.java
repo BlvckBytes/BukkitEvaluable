@@ -25,14 +25,15 @@
 package me.blvckbytes.bukkitevaluable.section;
 
 import me.blvckbytes.bbconfigmapper.ScalarType;
-import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
+import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
+import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.Nullable;
 
-public class ItemStackCustomEffectSection implements IConfigSection {
+public class ItemStackCustomEffectSection extends AConfigSection {
 
   private @Nullable BukkitEvaluable effect;
   private @Nullable BukkitEvaluable duration;
@@ -40,6 +41,10 @@ public class ItemStackCustomEffectSection implements IConfigSection {
   private @Nullable Boolean ambient;
   private @Nullable Boolean particles;
   private @Nullable Boolean icon;
+
+  public ItemStackCustomEffectSection(EvaluationEnvironmentBuilder baseEnvironment) {
+    super(baseEnvironment);
+  }
 
   public @Nullable PotionEffect asEffect(IEvaluationEnvironment environment) {
     // Cannot create an effect object without the effect itself

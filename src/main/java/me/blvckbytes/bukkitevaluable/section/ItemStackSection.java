@@ -30,11 +30,12 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.CSAlways;
-import me.blvckbytes.bbconfigmapper.sections.IConfigSection;
+import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.bukkitevaluable.EPatchFlag;
 import me.blvckbytes.bukkitevaluable.IItemBuildable;
 import me.blvckbytes.bukkitevaluable.ItemBuilder;
+import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -52,7 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ItemStackSection implements IConfigSection {
+public class ItemStackSection extends AConfigSection {
 
   private @Nullable BukkitEvaluable amount;
   private @Nullable BukkitEvaluable type;
@@ -66,6 +67,10 @@ public class ItemStackSection implements IConfigSection {
   private ItemStackCustomEffectSection @Nullable [] customEffects;
   private ItemStackBannerPatternSection @Nullable [] bannerPatterns;
   private @CSAlways List<EPatchFlag> patchFlags;
+
+  public ItemStackSection(EvaluationEnvironmentBuilder baseEnvironment) {
+    super(baseEnvironment);
+  }
 
   /**
    * Create an item stack builder from the parameters of this section
