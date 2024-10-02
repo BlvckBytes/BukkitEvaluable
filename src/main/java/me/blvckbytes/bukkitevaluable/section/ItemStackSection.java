@@ -25,9 +25,6 @@
 package me.blvckbytes.bukkitevaluable.section;
 
 import com.cryptomorin.xseries.XMaterial;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
-import com.mojang.authlib.properties.PropertyMap;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.CSAlways;
 import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
@@ -39,7 +36,6 @@ import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -47,7 +43,6 @@ import org.bukkit.inventory.meta.*;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -373,36 +368,14 @@ public class ItemStackSection extends AConfigSection {
     if (textures == null)
       return true;
 
-    if (!(meta instanceof SkullMeta))
+    // Rather fail safely if the handler is not available
+    if (ItemBuilder.texturesHandler == null)
       return false;
 
-    OfflinePlayer owner = ((SkullMeta) meta).getOwningPlayer();
+    String itemTextures = ItemBuilder.texturesHandler.getBase64Textures(meta);
+    String envTextures = textures.asScalar(ScalarType.STRING, environment);
 
-    if (owner == null)
-      return false;
-
-    String texturesValue = textures.asScalar(ScalarType.STRING, environment);
-
-    try {
-      Field profileField = meta.getClass().getDeclaredField("profile");
-      profileField.setAccessible(true);
-      GameProfile profile = (GameProfile) profileField.get(owner);
-      PropertyMap pm = profile.getProperties();
-      Collection<Property> targets = pm.get("textures");
-
-      // Does not contain any textures
-      if (targets.size() == 0)
-        return false;
-
-      for (Property target : targets) {
-        if (target.getValue().equals(texturesValue))
-          return true;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return false;
+    return envTextures.equals(itemTextures);
   }
 
   /**

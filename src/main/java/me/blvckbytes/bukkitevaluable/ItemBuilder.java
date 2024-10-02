@@ -25,10 +25,9 @@
 package me.blvckbytes.bukkitevaluable;
 
 import com.cryptomorin.xseries.XMaterial;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.section.*;
+import me.blvckbytes.bukkitevaluable.textures.TexturesHandler;
 import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
@@ -43,14 +42,27 @@ import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 public class ItemBuilder implements IItemBuildable {
+
+  public static @Nullable TexturesHandler texturesHandler;
+
+  static {
+    try {
+      try {
+        Class.forName("org.bukkit.profile.PlayerProfile");
+        texturesHandler = (TexturesHandler) Class.forName("me/blvckbytes/bukkitevaluable/textures/PlayerProfileTexturesHandler".replace('/', '.')).getConstructor().newInstance();
+      } catch (ClassNotFoundException e) {
+        texturesHandler = (TexturesHandler) Class.forName("me/blvckbytes/bukkitevaluable/textures/GameProfileTexturesHandler".replace('/', '.')).getConstructor().newInstance();
+      }
+    } catch (Exception e) {
+      texturesHandler = null;
+      e.printStackTrace();
+    }
+  }
 
   private final ItemStack baseItem;
   private final ItemMeta baseMeta;
@@ -536,9 +548,8 @@ public class ItemBuilder implements IItemBuildable {
    * @param textures Texture value
    */
   private void applyTextures(ItemMeta meta, String textures) {
-    GameProfile prof = new GameProfile(UUID.randomUUID(), "");
-    prof.getProperties().put("textures", new Property("textures", textures));
-    applyHeadProfile(meta, prof);
+    if (texturesHandler != null)
+      texturesHandler.setBase64Textures(meta, textures);
   }
 
   /**
@@ -548,41 +559,5 @@ public class ItemBuilder implements IItemBuildable {
   private void applyPattern(ItemMeta meta, Pattern pattern) {
     if (meta instanceof BannerMeta)
       ((BannerMeta) meta).addPattern(pattern);
-  }
-
-  /**
-   * Sets the head game profile of the item-meta
-   * @param profile Game profile to set
-   */
-  private void applyHeadProfile(ItemMeta meta, GameProfile profile) {
-    if (!(meta instanceof SkullMeta))
-      return;
-
-    // Try to find the setProfile method
-    Method setProfileMethod = null;
-    try {
-      setProfileMethod = meta.getClass().getDeclaredMethod("setProfile", GameProfile.class);
-    } catch (Exception ignored) {}
-
-    try {
-      // if available, we use setProfile(GameProfile) so that it sets both the profile field and the
-      // serialized profile field for us. If the serialized profile field isn't set
-      // ItemStack#isSimilar() and ItemStack#equals() throw an error.
-
-      // If setProfile is available, this is the preferred method, as it will also set
-      // the serialized profile field without which bukkit will panic on ItemStack#isSimilar() or ItemStack#equals()
-      if (setProfileMethod != null) {
-        setProfileMethod.setAccessible(true);
-        setProfileMethod.invoke(meta, profile);
-        return;
-      }
-
-      // Method unavailable, just set the GameProfile field
-      Field profileField = meta.getClass().getDeclaredField("profile");
-      profileField.setAccessible(true);
-      profileField.set(meta, profile);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 }
