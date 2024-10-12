@@ -343,8 +343,12 @@ public class ItemBuilder implements IItemBuildable {
         lines = new ArrayList<>();
 
       // Extend by new lore lines
-      for (BukkitEvaluable line : loreBlocks)
-        lines.addAll(line.asList(ScalarType.STRING, environment));
+      for (BukkitEvaluable line : loreBlocks) {
+        for (var lineItem : line.asList(ScalarType.STRING_PRESERVE_NULLS, environment)) {
+          if (lineItem != null)
+            lines.add(lineItem);
+        }
+      }
 
       resMeta.setLore(lines);
     }
