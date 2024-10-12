@@ -29,7 +29,7 @@ public class CommandUpdater {
     this.logger = plugin.getLogger();
     this.pluginPrefix = plugin.getName().toLowerCase(Locale.ROOT);
 
-    var craftServerClass = locateCraftServerClass(buildCraftBukkitPackageString());
+    var craftServerClass = locateCraftServerClass(Bukkit.getServer().getClass().getPackageName());
 
     this.commandMapField = locateCommandMapField();
     this.commandMap = locateCommandMap(craftServerClass);
@@ -119,47 +119,12 @@ public class CommandUpdater {
     }
   }
 
-  private Class<?> locateCraftServerClass(String packageString) {
+  private Class<?> locateCraftServerClass(String bukkitPackage) {
     try {
-      return Class.forName(packageString + ".CraftServer");
+      return Class.forName(bukkitPackage + ".CraftServer");
     } catch (Exception e) {
       throw new IllegalStateException("Could not locate the CraftServer class", e);
     }
-  }
-
-  private String buildCraftBukkitPackageString() {
-    /*
-      BukkitVersion: 1.21.1-R0.1-SNAPSHOT
-      Desired Result: v1_18_R1
-     */
-    var packageVersion = new StringBuilder();
-
-    var bukkitVersion = Bukkit.getBukkitVersion();
-    var partBeginIndex = 0;
-
-    for (var i = 0; i < 3; ++i) {
-      var delimiterChar = i != 2 ? '.' : '-';
-      var nextDelimiter = bukkitVersion.indexOf(delimiterChar, partBeginIndex);
-
-      if (nextDelimiter < 0)
-        throw new IllegalStateException("Could note locate " + (i + 1) + "th delimiter in version-string");
-
-      var versionPart = bukkitVersion.substring(partBeginIndex, nextDelimiter);
-
-      if (i == 0)
-        packageVersion.append('v');
-      else {
-        packageVersion.append('_');
-
-        if (i == 2)
-          packageVersion.append('R');
-      }
-
-      packageVersion.append(versionPart);
-      partBeginIndex = nextDelimiter + 1;
-    }
-
-    return "org.bukkit.craftbukkit." + packageVersion;
   }
 
   private Field locateCommandMapField() {
