@@ -23,7 +23,7 @@ public class ConfigKeeper<T extends AConfigSection> {
     this.fileName = fileName;
     this.rootSectionType = rootSectionType;
     this.reloadListeners = new ArrayList<>();
-    this.rootSection = loadRootSection();
+    this.rootSection = loadRootSection(true);
   }
 
   public void registerReloadListener(Runnable listener) {
@@ -31,13 +31,17 @@ public class ConfigKeeper<T extends AConfigSection> {
   }
 
   public void reload() throws Exception {
-    this.rootSection = loadRootSection();
+    this.rootSection = loadRootSection(false);
 
     for (var listener : this.reloadListeners)
       listener.run();
   }
 
-  private T loadRootSection() throws Exception {
+  private T loadRootSection(boolean initial) throws Exception {
+    // Called in ConfigManager's constructor already on startup
+    if (!initial)
+      this.configManager.loadAndMigrateInputFiles();
+
     return this.configManager.loadConfig(fileName).mapSection(null, rootSectionType);
   }
 }

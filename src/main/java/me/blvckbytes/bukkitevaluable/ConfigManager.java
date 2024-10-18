@@ -24,7 +24,12 @@
 
 package me.blvckbytes.bukkitevaluable;
 
+import com.google.common.base.Charsets;
 import me.blvckbytes.bbconfigmapper.*;
+import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessor;
+import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessorException;
+import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessorInput;
+import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessorInputException;
 import me.blvckbytes.bukkitevaluable.functions.Base64ToSkinUrlFunction;
 import me.blvckbytes.bukkitevaluable.functions.SkinUrlToBase64Function;
 import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
@@ -33,20 +38,25 @@ import me.blvckbytes.gpeee.IExpressionEvaluator;
 import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.functions.AExpressionFunction;
 import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
+import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
+import me.blvckbytes.gpeee.parser.expression.AExpression;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.file.*;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
   private static final String EXPRESSION_MARKER_SUFFIX = "$";
+  private static final String PREPROCESSOR_INPUT_MARKER = "PRE-PROCESSOR-INPUT ";
 
-  private final Map<String, Tuple<IExpressionEvaluator, IConfigMapper>> mapperByPath;
+  private final Map<String, Tuple<IExpressionEvaluator, IConfigMapper>> mapperByFileName;
+  private final Map<String, PreProcessorInput> preProcessorInputByFileName;
+
   private final Logger logger;
   private final Plugin plugin;
 
@@ -54,21 +64,135 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
     base64ToSkinUrlFunction,
     skinUrlToBase64Function;
 
-  public ConfigManager(Plugin plugin) {
-    this.mapperByPath = new HashMap<>();
+  private final String folderName;
+  private final File folder;
+
+  private final PreProcessor preProcessor;
+
+  public ConfigManager(Plugin plugin, String folderName) throws Exception {
+    this.mapperByFileName = new HashMap<>();
+    this.preProcessorInputByFileName = new HashMap<>();
+
     this.plugin = plugin;
     this.logger = plugin.getLogger();
+    this.folderName = folderName.charAt(0) == '/' ? folderName : ("/" + folderName);
+    this.preProcessor = new PreProcessor();
+
+    this.folder = new File(plugin.getDataFolder(), folderName);
+
+    if (!this.folder.exists()) {
+      if (!this.folder.mkdirs())
+        throw new IllegalStateException("Could not create directories for " + this.folder);
+    }
 
     this.base64ToSkinUrlFunction = new Base64ToSkinUrlFunction();
     this.skinUrlToBase64Function = new SkinUrlToBase64Function();
+
+    loadAndMigrateInputFiles();
+  }
+
+  private void loadAndMigrateInputFile(Path internalPath, File externalFile) throws Exception {
+    var internalInput = new PreProcessorInput();
+    var internalFileName = internalPath.getFileName().toString().toLowerCase();
+
+    try {
+      var internalFileStream = ConfigManager.class.getResourceAsStream(internalPath.toString());
+
+      if (internalFileStream == null)
+        throw new IllegalStateException("Expected " + internalPath + " to exist within jar");
+
+      try (
+        var internalFileStreamReader = new InputStreamReader(internalFileStream, Charsets.UTF_8)
+      ) {
+        internalInput.load(internalFileStreamReader);
+      }
+    } catch (PreProcessorInputException e) {
+      throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + internalPath);
+    }
+
+    if (!externalFile.exists()) {
+      try (
+        var writer = new FileWriter(externalFile, Charsets.UTF_8)
+      ) {
+        internalInput.save(writer);
+      }
+
+      preProcessorInputByFileName.put(internalFileName, internalInput);
+      return;
+    }
+
+    if (!externalFile.isFile())
+      throw new IllegalStateException("Expected file at " + externalFile + ", but found directory");
+
+    var externalInput = new PreProcessorInput();
+
+    try {
+      try (
+        var externalFileReader = new FileReader(externalFile, Charsets.UTF_8)
+      ) {
+        externalInput.load(externalFileReader);
+      }
+
+      var numExtendedKeys = externalInput.migrateTo(internalInput);
+
+      if (numExtendedKeys > 0)
+        this.logger.log(Level.INFO, "Extended " + numExtendedKeys + " new keys on the pre-processor input " + internalFileName);
+
+      try (
+        var writer = new FileWriter(externalFile, Charsets.UTF_8)
+      ) {
+        externalInput.save(writer);
+      }
+    } catch (PreProcessorInputException e) {
+      throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + externalFile);
+    }
+
+    preProcessorInputByFileName.put(internalFileName, externalInput);
+  }
+
+  public void loadAndMigrateInputFiles() throws Exception {
+    var folderUrl = ConfigManager.class.getResource(folderName);
+
+    if (folderUrl == null)
+      throw new IllegalStateException("Could not access resources-folder at " + folderName);
+
+    var folderUri  = folderUrl.toURI();
+
+    Path folderPath;
+    FileSystem fileSystem = null;
+
+    if (folderUri.getScheme().equals("jar")) {
+      fileSystem = FileSystems.newFileSystem(folderUri, Collections.emptyMap());
+      folderPath = fileSystem.getPath(folderName);
+    }
+
+    else
+      folderPath = Paths.get(folderUri);
+
+    try (
+      var walkStream = Files.walk(folderPath, 1)
+    ) {
+      for (var walkStreamIterator = walkStream.iterator(); walkStreamIterator.hasNext();) {
+        var internalPath = walkStreamIterator.next();
+
+        if (!internalPath.getFileName().toString().endsWith(".txt"))
+          continue;
+
+        var externalFile = new File(folder, internalPath.getFileName().toString());
+        loadAndMigrateInputFile(internalPath, externalFile);
+      }
+    }
+
+    if (fileSystem != null)
+      fileSystem.close();
   }
 
   @Override
-  public IConfigMapper getMapper(String path) throws FileNotFoundException {
-    Tuple<IExpressionEvaluator, IConfigMapper> mapper = mapperByPath.get(path.toLowerCase());
+  public IConfigMapper getMapper(String fileName) throws FileNotFoundException {
+    Tuple<IExpressionEvaluator, IConfigMapper> mapper = mapperByFileName.get(fileName.toLowerCase());
 
     if (mapper == null)
-      throw new FileNotFoundException("Could not find the config at " + path);
+      throw new FileNotFoundException("Could not find the config at " + folderName + "/" + fileName);
 
     return mapper.b;
   }
@@ -95,87 +219,183 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
     return null;
   }
 
-  private int extendConfig(String path, YamlConfig config) throws Exception {
+  private String getPluginResourcePath(String fileName) {
+    return Paths.get(folderName, fileName).toString().substring(1);
+  }
+
+  private int extendConfig(String fileName, YamlConfig config) throws Exception {
     try (
-      InputStream resourceStream = this.plugin.getResource(path)
+      InputStream resourceStream = this.plugin.getResource(getPluginResourcePath(fileName))
     ) {
       if (resourceStream == null)
-        throw new IllegalStateException("Could not load resource file at " + path);
+        throw new IllegalStateException("Could not load resource file at " + fileName);
+
+      YamlConfig resourceConfig = new YamlConfig(null, this.logger, null);
 
       try (
-        InputStreamReader resourceReader = new InputStreamReader(resourceStream);
+        var resourceStreamReader = new InputStreamReader(resourceStream, Charsets.UTF_8)
       ) {
-        YamlConfig resourceConfig = new YamlConfig(null, this.logger, null);
-        resourceConfig.load(resourceReader);
-        return config.extendMissingKeys(resourceConfig);
+        resourceConfig.load(resourceStreamReader);
       }
+
+      return config.extendMissingKeys(resourceConfig);
     }
   }
 
-  private void saveConfig(YamlConfig config, String path) throws Exception {
-    File file = new File(plugin.getDataFolder(), path);
+  private void saveConfig(YamlConfig config, String fileName) throws Exception {
+    File file = new File(this.folder, fileName);
 
     if (file.exists() && !file.isFile())
       throw new IllegalStateException("Tried to write file; unexpected directory at " + file);
 
-    if (!file.getParentFile().exists()) {
-      if (!file.getParentFile().mkdirs())
-        throw new IllegalStateException("Could not create parent directories for " + file);
-    }
-
     try (
       FileOutputStream outputStream = new FileOutputStream(file);
-      OutputStreamWriter outputWriter = new OutputStreamWriter(outputStream);
+      OutputStreamWriter outputWriter = new OutputStreamWriter(outputStream)
     ) {
       config.save(outputWriter);
     }
   }
 
-  public ConfigMapper loadConfig(String path) throws Exception {
+  private @Nullable String parsePreProcessorFileName(String fileName, YamlConfig config) {
+    var file = new File(this.folder, fileName);
+    var configHeader = config.getHeader();
+    var inputMarkerIndex = configHeader.indexOf(PREPROCESSOR_INPUT_MARKER);
+
+    if (inputMarkerIndex < 0)
+      return null;
+
+    inputMarkerIndex += PREPROCESSOR_INPUT_MARKER.length();
+    var inputArgumentBegin = inputMarkerIndex;
+
+    while (inputMarkerIndex < configHeader.length()) {
+      var currentChar = configHeader.charAt(inputMarkerIndex);
+
+      if (currentChar == ' ' || currentChar == '\n') {
+        --inputMarkerIndex;
+        break;
+      }
+
+      ++inputMarkerIndex;
+    }
+
+    var inputArgument = configHeader.substring(inputArgumentBegin, inputMarkerIndex + 1);
+
+    if (!inputArgument.endsWith(".txt")) {
+      logger.warning("Invalid pre-processor input in header-comment of file " + file + " with value \"" + inputArgument + "\"");
+      return null;
+    }
+
+    return inputArgument;
+  }
+
+  public ConfigMapper loadConfig(String fileName) throws Exception {
     boolean hasBeenCreated = false;
 
-    File file = new File(plugin.getDataFolder(), path);
+    File file = new File(this.folder, fileName);
 
     if (file.exists()) {
       if (file.isDirectory())
         throw new IllegalStateException("Tried to read file; unexpected directory at " + file);
     } else {
-      this.plugin.saveResource(path, true);
+      this.plugin.saveResource(getPluginResourcePath(fileName), true);
       hasBeenCreated = true;
     }
 
     try (
-      FileInputStream inputStream = new FileInputStream(file);
-      InputStreamReader streamReader = new InputStreamReader(inputStream);
+      var inputStream = new FileInputStream(file);
+      var inputStreamReader = new InputStreamReader(inputStream, Charsets.UTF_8)
     ) {
       GPEEE evaluator = new GPEEE(logger);
       YamlConfig config = new YamlConfig(evaluator, this.logger, EXPRESSION_MARKER_SUFFIX);
 
-      config.load(streamReader);
+      config.load(inputStreamReader);
 
       if (!hasBeenCreated) {
-        int numExtendedKeys = extendConfig(path, config);
+        int numExtendedKeys = extendConfig(fileName, config);
 
         if (numExtendedKeys > 0) {
-          this.logger.log(Level.INFO, "Extended " + numExtendedKeys + " new keys on the configuration " + path);
-          saveConfig(config, path);
+          this.logger.log(Level.INFO, "Extended " + numExtendedKeys + " new keys on the configuration " + fileName);
+          saveConfig(config, fileName);
         }
       }
+
+      var preProcessorFileName = parsePreProcessorFileName(fileName, config);
+
+      if (preProcessorFileName != null) {
+        var preProcessorInput = preProcessorInputByFileName.get(preProcessorFileName);
+
+        if (preProcessorInput == null)
+          throw new IllegalStateException("Could not locate pre-processor input named " + preProcessorFileName + " as requested in " + file);
+
+        preProcessor.forEachScalarValue(config, scalarNode -> {
+          var nodeValue = scalarNode.getValue();
+
+          try {
+            var result = preProcessor.preProcess(nodeValue, preProcessorInput);
+            preProcessor.setScalarValue(scalarNode, result.a);
+            return result.b;
+          } catch (PreProcessorException e) {
+            int lineNumber = scalarNode.getStartMark().getLine();
+            logger.severe("An error (" + e.conflict + ") occurred while pre-processing " + file + " at line " + lineNumber);
+            logger.severe("Conflicting position (beginning of output): " + nodeValue.substring(e.charIndex).trim());
+            throw e;
+          }
+        });
+
+        logger.info("Applied pre-processor input " + preProcessorInput + " to " + file);
+
+        var preProcessorFileNameWithoutExtension = preProcessorFileName.substring(0, preProcessorFileName.lastIndexOf('.'));
+        var outputFile = new File(file.getParentFile(), "result." + preProcessorFileNameWithoutExtension + ".yml");
+
+        config.save(new FileWriter(outputFile));
+        logger.info("Saved read-only pre-processed version of " + file + " at " + outputFile);
+      }
+
+      else
+        logger.warning("Found no usable pre-processor input in header-comment of " + file);
 
       Object lutValue = config.get("lut");
       Map<?, ?> lut = lutValue instanceof Map ? (Map<?, ?>) lutValue : new HashMap<>();
 
       EvaluationEnvironmentBuilder baseEnvironment = new EvaluationEnvironmentBuilder()
-        .withStaticVariable("lut", lut)
         .withFunction("base64_to_skin_url", base64ToSkinUrlFunction)
         .withFunction("skin_url_to_base64", skinUrlToBase64Function)
         .withValueInterpreter(BukkitValueInterpreter.getInstance());
 
+      // Enable support for expressions within the LUT also
+      baseEnvironment
+        .withStaticVariable("lut", evaluateLeafExpressions(evaluator, baseEnvironment.build(), lut));
+
       evaluator.setBaseEnvironment(baseEnvironment);
 
       ConfigMapper mapper = new ConfigMapper(config, this.logger, evaluator, this);
-      mapperByPath.put(path.toLowerCase(), new Tuple<>(evaluator, mapper));
+      mapperByFileName.put(fileName.toLowerCase(), new Tuple<>(evaluator, mapper));
       return mapper;
     }
+  }
+
+  private Object evaluateLeafExpressions(GPEEE evaluator, IEvaluationEnvironment environment, Object input) {
+    if (input instanceof List<?> list) {
+      var result = new ArrayList<>();
+
+      for (var entry : list)
+        result.add(evaluateLeafExpressions(evaluator, environment, entry));
+
+      return result;
+    }
+
+    if (input instanceof Map<?,?> map) {
+      var result = new HashMap<>();
+
+      for (var entry : map.entrySet())
+        result.put(entry.getKey(), evaluateLeafExpressions(evaluator, environment, entry.getValue()));
+
+      return result;
+    }
+
+    while (input instanceof AExpression)
+      input = evaluator.evaluateExpression((AExpression) input, environment);
+
+    return input;
   }
 }
