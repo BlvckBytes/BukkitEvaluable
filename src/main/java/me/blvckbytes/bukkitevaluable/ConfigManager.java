@@ -342,6 +342,8 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
           }
         });
 
+        config.clearKeyCache();
+
         logger.info("Applied pre-processor input " + preProcessorInput + " to " + file);
 
         var preProcessorFileNameWithoutExtension = preProcessorFileName.substring(0, preProcessorFileName.lastIndexOf('.'));
