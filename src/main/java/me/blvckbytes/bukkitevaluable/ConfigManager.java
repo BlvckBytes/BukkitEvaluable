@@ -220,15 +220,17 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   }
 
   private String getPluginResourcePath(String fileName) {
-    return Paths.get(folderName, fileName).toString().substring(1);
+    return folderName.substring(1) + "/" + fileName;
   }
 
   private int extendConfig(String fileName, YamlConfig config) throws Exception {
+    var resourcePath = getPluginResourcePath(fileName);
+
     try (
-      InputStream resourceStream = this.plugin.getResource(getPluginResourcePath(fileName))
+      InputStream resourceStream = this.plugin.getResource(resourcePath)
     ) {
       if (resourceStream == null)
-        throw new IllegalStateException("Could not load resource file at " + fileName);
+        throw new IllegalStateException("Could not load resource file at " + resourcePath);
 
       YamlConfig resourceConfig = new YamlConfig(null, this.logger, null);
 
