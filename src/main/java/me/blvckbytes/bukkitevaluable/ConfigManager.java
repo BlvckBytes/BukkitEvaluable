@@ -88,37 +88,43 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
     this.base64ToSkinUrlFunction = new Base64ToSkinUrlFunction();
     this.skinUrlToBase64Function = new SkinUrlToBase64Function();
 
-    loadAndMigrateInputFiles();
+    loadAndPossiblyMigrateInputFiles();
   }
 
-  private void loadAndMigrateInputFile(Path internalPath, File externalFile) throws Exception {
-    var internalInput = new PreProcessorInput();
-    var internalFileName = internalPath.getFileName().toString().toLowerCase();
+  private void loadAndPossiblyMigrateInputFile(@Nullable Path internalPath, File externalFile) throws Exception {
+    var fileName = externalFile.getName().toLowerCase();
 
-    try {
-      var internalFileStream = ConfigManager.class.getResourceAsStream(internalPath.toString());
+    PreProcessorInput internalInput = null;
 
-      if (internalFileStream == null)
-        throw new IllegalStateException("Expected " + internalPath + " to exist within jar");
+    if (internalPath != null) {
+      internalInput = new PreProcessorInput();
 
-      try (
-        var internalFileStreamReader = new InputStreamReader(internalFileStream, Charsets.UTF_8)
-      ) {
-        internalInput.load(internalFileStreamReader);
-      }
-    } catch (PreProcessorInputException e) {
-      throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + internalPath);
-    }
+      try {
+        var internalFileStream = ConfigManager.class.getResourceAsStream(internalPath.toString());
 
-    if (!externalFile.exists()) {
-      try (
-        var writer = new FileWriter(externalFile, Charsets.UTF_8)
-      ) {
-        internalInput.save(writer);
+        if (internalFileStream == null)
+          throw new IllegalStateException("Expected " + internalPath + " to exist within jar");
+
+        try (
+          var internalFileStreamReader = new InputStreamReader(internalFileStream, Charsets.UTF_8)
+        ) {
+          internalInput.load(internalFileStreamReader);
+        }
+      } catch (PreProcessorInputException e) {
+        throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + internalPath);
       }
 
-      preProcessorInputByFileName.put(internalFileName, internalInput);
-      return;
+
+      if (!externalFile.exists()) {
+        try (
+          var writer = new FileWriter(externalFile, Charsets.UTF_8)
+        ) {
+          internalInput.save(writer);
+        }
+
+        preProcessorInputByFileName.put(fileName, internalInput);
+        return;
+      }
     }
 
     if (!externalFile.isFile())
@@ -133,24 +139,26 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
         externalInput.load(externalFileReader);
       }
 
-      var numExtendedKeys = externalInput.migrateTo(internalInput);
+      if (internalInput != null) {
+        var numExtendedKeys = externalInput.migrateTo(internalInput);
 
-      if (numExtendedKeys > 0)
-        this.logger.log(Level.INFO, "Extended " + numExtendedKeys + " new keys on the pre-processor input " + internalFileName);
+        if (numExtendedKeys > 0)
+          this.logger.log(Level.INFO, "Extended " + numExtendedKeys + " new keys on the pre-processor input " + fileName);
 
-      try (
-        var writer = new FileWriter(externalFile, Charsets.UTF_8)
-      ) {
-        externalInput.save(writer);
+        try (
+          var writer = new FileWriter(externalFile, Charsets.UTF_8)
+        ) {
+          externalInput.save(writer);
+        }
       }
     } catch (PreProcessorInputException e) {
       throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + externalFile);
     }
 
-    preProcessorInputByFileName.put(internalFileName, externalInput);
+    preProcessorInputByFileName.put(fileName, externalInput);
   }
 
-  public void loadAndMigrateInputFiles() throws Exception {
+  private List<Path> getTextFilesInFolderWithinResources() throws Exception {
     var folderUrl = ConfigManager.class.getResource(folderName);
 
     if (folderUrl == null)
@@ -169,6 +177,8 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
     else
       folderPath = Paths.get(folderUri);
 
+    var result = new ArrayList<Path>();
+
     try (
       var walkStream = Files.walk(folderPath, 1)
     ) {
@@ -178,13 +188,41 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
         if (!internalPath.getFileName().toString().endsWith(".txt"))
           continue;
 
-        var externalFile = new File(folder, internalPath.getFileName().toString());
-        loadAndMigrateInputFile(internalPath, externalFile);
+        var parent = internalPath.getParent();
+
+        if (parent == null)
+          continue;
+
+        if (!parent.getFileName().toString().equals(folderName.substring(1)))
+          continue;
+
+        result.add(internalPath);
       }
     }
 
     if (fileSystem != null)
       fileSystem.close();
+
+    return result;
+  }
+
+  public void loadAndPossiblyMigrateInputFiles() throws Exception {
+    for (var textFilePath : getTextFilesInFolderWithinResources())
+      loadAndPossiblyMigrateInputFile(textFilePath, new File(folder, textFilePath.getFileName().toString()));
+
+    // Allow to load (yet-)unknown files from the folder (obviously without prior migration).
+    // This is very useful while creating new translations.
+    for (var fileInFolder : Objects.requireNonNull(folder.listFiles())) {
+      var fileName = fileInFolder.getName();
+
+      if (!fileName.endsWith(".txt"))
+        continue;
+
+      if (preProcessorInputByFileName.containsKey(fileName))
+        continue;
+
+      loadAndPossiblyMigrateInputFile(null, fileInFolder);
+    }
   }
 
   @Override

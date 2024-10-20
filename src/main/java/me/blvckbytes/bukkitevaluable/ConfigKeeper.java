@@ -40,7 +40,7 @@ public class ConfigKeeper<T extends AConfigSection> {
   private T loadRootSection(boolean initial) throws Exception {
     // Called in ConfigManager's constructor already on startup
     if (!initial)
-      this.configManager.loadAndMigrateInputFiles();
+      this.configManager.loadAndPossiblyMigrateInputFiles();
 
     return this.configManager.loadConfig(fileName).mapSection(null, rootSectionType);
   }
