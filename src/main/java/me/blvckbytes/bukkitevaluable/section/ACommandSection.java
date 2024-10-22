@@ -24,18 +24,18 @@ public abstract class ACommandSection extends AConfigSection {
   private List<String> evaluatedAliases;
 
   @CSIgnore
-  private final String fallbackName;
+  public final String initialName;
 
-  public ACommandSection(String fallbackName, EvaluationEnvironmentBuilder baseEnvironment) {
+  public ACommandSection(String initialName, EvaluationEnvironmentBuilder baseEnvironment) {
     super(baseEnvironment);
-    this.fallbackName = fallbackName;
+    this.initialName = initialName;
   }
 
   @Override
   public void afterParsing(List<Field> fields) throws Exception {
     super.afterParsing(fields);
 
-    this.evaluatedName = name != null ? name.asScalar(ScalarType.STRING, builtBaseEnvironment) : fallbackName;
+    this.evaluatedName = name != null ? name.asScalar(ScalarType.STRING, builtBaseEnvironment) : initialName;
     this.evaluatedAliases = aliases != null ? aliases.asList(ScalarType.STRING, builtBaseEnvironment) : List.of();
   }
 
