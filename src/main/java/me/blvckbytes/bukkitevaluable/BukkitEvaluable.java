@@ -66,20 +66,20 @@ public class BukkitEvaluable extends ConfigValue {
   }
 
   public TextComponent asTextComponent(IEvaluationEnvironment environment) {
-    return new TextComponent(asString(environment));
+    return new TextComponent(asScalar(ScalarType.STRING, environment));
   }
 
   public @Nullable XMaterial asXMaterial(IEvaluationEnvironment environment) {
-    return XMaterial.matchXMaterial(asString(environment)).orElse(null);
+    return XMaterial.matchXMaterial(asScalar(ScalarType.STRING, environment)).orElse(null);
   }
 
   public @Nullable Enchantment asEnchantment(IEvaluationEnvironment environment) {
-    XEnchantment xEnchantment = XEnchantment.matchXEnchantment(asString(environment)).orElse(null);
+    XEnchantment xEnchantment = XEnchantment.matchXEnchantment(asScalar(ScalarType.STRING, environment)).orElse(null);
     return xEnchantment == null ? null : xEnchantment.getEnchant();
   }
 
   public @Nullable PotionType asPotionType(IEvaluationEnvironment environment) {
-    String stringValue = asString(environment);
+    String stringValue = asScalar(ScalarType.STRING, environment);
 
     // Try to get the abstracted type
     Optional<XPotion> xPotion = XPotion.matchXPotion(stringValue);
@@ -96,17 +96,17 @@ public class BukkitEvaluable extends ConfigValue {
   }
 
   public @Nullable PotionEffectType asPotionEffectType(IEvaluationEnvironment environment) {
-    XPotion potion = XPotion.matchXPotion(asString(environment)).orElse(null);
+    XPotion potion = XPotion.matchXPotion(asScalar(ScalarType.STRING, environment)).orElse(null);
     return potion == null ? null : potion.getPotionEffectType();
   }
 
   public @Nullable java.awt.Color asJavaColor(IEvaluationEnvironment environment) {
-    String stringValue = asString(environment);
+    String stringValue = asScalar(ScalarType.STRING, environment);
     return parseRGBNotation(stringValue, java.awt.Color::new);
   }
 
   public @Nullable Color asBukkitColor(IEvaluationEnvironment environment) {
-    String stringValue = asString(environment);
+    String stringValue = asScalar(ScalarType.STRING, environment);
 
     // Try to parse an enum name
     Color enumValue = parseEnum(Color.class, stringValue);
@@ -137,7 +137,7 @@ public class BukkitEvaluable extends ConfigValue {
   }
 
   public <T> @Nullable T asEnumerationConstant(Class<T> enumerationClass, IEvaluationEnvironment environment) {
-    return parseEnum(enumerationClass, asString(environment));
+    return parseEnum(enumerationClass, asScalar(ScalarType.STRING, environment));
   }
 
   public <T> Set<T> asEnumerationConstantSet(Class<T> enumerationClass, IEvaluationEnvironment environment) {
@@ -154,14 +154,6 @@ public class BukkitEvaluable extends ConfigValue {
     }
 
     return constants;
-  }
-
-  //=========================================================================//
-  //                                Utilities                                //
-  //=========================================================================//
-
-  private String asString(IEvaluationEnvironment environment) {
-    return asScalar(ScalarType.STRING, environment);
   }
 
   //=========================================================================//

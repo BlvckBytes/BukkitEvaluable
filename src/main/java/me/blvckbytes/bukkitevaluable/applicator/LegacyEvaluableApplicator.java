@@ -3,7 +3,6 @@ package me.blvckbytes.bukkitevaluable.applicator;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -16,7 +15,7 @@ public class LegacyEvaluableApplicator implements EvaluableApplicator {
   @Override
   public void setDisplayName(ItemMeta meta, BukkitEvaluable evaluable, IEvaluationEnvironment environment) {
     var displayNameMessage = evaluable.asScalar(ScalarType.STRING, environment);
-    meta.setDisplayName(translateColors(displayNameMessage));
+    meta.setDisplayName(displayNameMessage);
   }
 
   @Override
@@ -33,7 +32,7 @@ public class LegacyEvaluableApplicator implements EvaluableApplicator {
       if (loreLineMessage == null)
         continue;
 
-      loreLines.add(translateColors(loreLineMessage));
+      loreLines.add(loreLineMessage);
     }
 
     meta.setLore(loreLines);
@@ -43,16 +42,12 @@ public class LegacyEvaluableApplicator implements EvaluableApplicator {
   public void sendMessage(CommandSender receiver, BukkitEvaluable evaluable, IEvaluationEnvironment environment) {
     if (evaluable.value instanceof Collection<?>) {
       for (var message : evaluable.asList(ScalarType.STRING, environment))
-        receiver.sendMessage(translateColors(message));
+        receiver.sendMessage(message);
 
       return;
     }
 
-    var message = translateColors(evaluable.asScalar(ScalarType.STRING, environment));
+    var message = evaluable.asScalar(ScalarType.STRING, environment);
     receiver.sendMessage(message);
-  }
-
-  private String translateColors(String input) {
-    return ChatColor.translateAlternateColorCodes('&', input);
   }
 }

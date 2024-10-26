@@ -409,7 +409,8 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
       // Enable support for expressions within the LUT also
       baseEnvironment
-        .withStaticVariable("lut", evaluateLeafExpressions(evaluator, baseEnvironment.build(), lut));
+        .withStaticVariable("lut", evaluateLeafExpressions(evaluator, baseEnvironment.build(), lut))
+          .withValueInterpreter(new BukkitValueInterpreter());
 
       evaluator.setBaseEnvironment(baseEnvironment);
 
