@@ -28,11 +28,9 @@ import com.cryptomorin.xseries.XMaterial;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.section.*;
 import me.blvckbytes.bukkitevaluable.textures.TexturesHandler;
-import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
-import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -45,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ItemBuilder implements IItemBuildable {
 
@@ -126,10 +125,6 @@ public class ItemBuilder implements IItemBuildable {
     this.enchantments = new ArrayList<>(enchantments);
     this.bannerPatterns = new ArrayList<>(bannerPatterns);
     this.flags = new ArrayList<>(flags);
-  }
-
-  public ItemBuilder(Material material, int amount) {
-    this(new ItemStack(material), amount);
   }
 
   public ItemBuilder(ItemStack item, int amount) {
@@ -300,11 +295,6 @@ public class ItemBuilder implements IItemBuildable {
   //=========================================================================//
 
   @Override
-  public ItemStack build() {
-    return build(GPEEE.EMPTY_ENVIRONMENT);
-  }
-
-  @Override
   public ItemStack build(IEvaluationEnvironment environment) {
     ItemStack res = baseItem.clone();
     ItemMeta resMeta = baseMeta.clone();
@@ -316,7 +306,7 @@ public class ItemBuilder implements IItemBuildable {
 
       if (material != null) {
         material.setType(res);
-        resMeta = res.getItemMeta();
+        resMeta = Objects.requireNonNull(res.getItemMeta());
       }
     }
 
@@ -328,30 +318,26 @@ public class ItemBuilder implements IItemBuildable {
     //////////////////////////////// Display name ////////////////////////////////
 
     if (name != null)
-      resMeta.setDisplayName(name.asScalar(ScalarType.STRING, environment));
+      name.setDisplayName(resMeta, environment);
 
     /////////////////////////////////// Lore ///////////////////////////////////
 
+    if (loreBlocks.isEmpty()) {
+      if (loreOverride)
+        resMeta.setLore(null);
+    }
+
+    else {
+      for (var i = 0; i < loreBlocks.size(); ++i) {
+        // TODO: I'm really not happy with how "lore-blocks" are realized at this point...
+        //       The main idea was that not just existing items, but also config-sections which
+        //       have been turned into IItemBuildable-s can be patched by other sections.
+        loreBlocks.get(i).setLore(resMeta, environment, i == 0 && loreOverride);
+      }
+    }
+
     if (loreOverride)
       resMeta.setLore(null);
-
-    if (loreBlocks.size() > 0) {
-      // Get old lore lines to extend, if applicable
-      List<String> lines = resMeta.getLore();
-
-      if (lines == null)
-        lines = new ArrayList<>();
-
-      // Extend by new lore lines
-      for (BukkitEvaluable line : loreBlocks) {
-        for (var lineItem : line.asList(ScalarType.STRING_PRESERVE_NULLS, environment)) {
-          if (lineItem != null)
-            lines.add(lineItem);
-        }
-      }
-
-      resMeta.setLore(lines);
-    }
 
     /////////////////////////////////// Color //////////////////////////////////
 

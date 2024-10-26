@@ -48,11 +48,12 @@ public class PermissionsSection extends AConfigSection {
   }
 
   public void sendMissingMessage(Player player, IPermissionNode node) {
-    player.sendMessage(missingMessage.stringify(
+    missingMessage.sendMessage(
+      player,
       new EvaluationEnvironmentBuilder()
         .withStaticVariable("permission", resolveNode(node))
         .build()
-    ));
+    );
   }
 
   private String resolveNode(IPermissionNode node) {

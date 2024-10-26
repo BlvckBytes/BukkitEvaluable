@@ -30,6 +30,8 @@ import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessor;
 import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessorException;
 import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessorInput;
 import me.blvckbytes.bbconfigmapper.preprocessor.PreProcessorInputException;
+import me.blvckbytes.bukkitevaluable.applicator.EvaluableApplicator;
+import me.blvckbytes.bukkitevaluable.applicator.LegacyEvaluableApplicator;
 import me.blvckbytes.bukkitevaluable.functions.Base64ToSkinUrlFunction;
 import me.blvckbytes.bukkitevaluable.functions.SkinUrlToBase64Function;
 import me.blvckbytes.bukkitevaluable.section.ItemStackSection;
@@ -68,8 +70,10 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   private final File folder;
 
   private final PreProcessor preProcessor;
+  private final EvaluableApplicator applicator;
 
   public ConfigManager(Plugin plugin, String folderName) throws Exception {
+    this.applicator = new LegacyEvaluableApplicator();
     this.mapperByFileName = new HashMap<>();
     this.preProcessorInputByFileName = new HashMap<>();
 
@@ -249,7 +253,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   @Override
   public @Nullable FValueConverter getConverterFor(Class<?> type) {
     if (type == BukkitEvaluable.class)
-      return BukkitEvaluable::new;
+      return (value, evaluator) -> new BukkitEvaluable(value, evaluator, applicator);
 
     if (type == IItemBuildable.class)
       return (value, evaluator) -> ((ItemStackSection) value).asItem();
@@ -401,8 +405,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
       EvaluationEnvironmentBuilder baseEnvironment = new EvaluationEnvironmentBuilder()
         .withFunction("base64_to_skin_url", base64ToSkinUrlFunction)
-        .withFunction("skin_url_to_base64", skinUrlToBase64Function)
-        .withValueInterpreter(BukkitValueInterpreter.getInstance());
+        .withFunction("skin_url_to_base64", skinUrlToBase64Function);
 
       // Enable support for expressions within the LUT also
       baseEnvironment

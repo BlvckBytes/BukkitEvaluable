@@ -29,13 +29,14 @@ import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XPotion;
 import me.blvckbytes.bbconfigmapper.ConfigValue;
 import me.blvckbytes.bbconfigmapper.ScalarType;
-import me.blvckbytes.gpeee.GPEEE;
+import me.blvckbytes.bukkitevaluable.applicator.EvaluableApplicator;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.Nullable;
@@ -43,11 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class BukkitEvaluable extends ConfigValue {
-
-  public static final BukkitEvaluable UNDEFINED_STRING = BukkitEvaluable.of("undefined");
 
   private static final Map<Class<?>, Map<String, Object>> enumCache;
 
@@ -55,12 +53,16 @@ public class BukkitEvaluable extends ConfigValue {
     enumCache = new HashMap<>();
   }
 
-  public BukkitEvaluable(@Nullable Object value, @Nullable IExpressionEvaluator evaluator) {
-    super(value, evaluator);
-  }
+  public final EvaluableApplicator applicator;
 
-  public static BukkitEvaluable of(@Nullable Object value) {
-    return new BukkitEvaluable(value, null);
+  public BukkitEvaluable(
+    @Nullable Object value,
+    @Nullable IExpressionEvaluator evaluator,
+    EvaluableApplicator applicator
+  ) {
+    super(value, evaluator);
+
+    this.applicator = applicator;
   }
 
   public TextComponent asTextComponent(IEvaluationEnvironment environment) {
@@ -154,47 +156,6 @@ public class BukkitEvaluable extends ConfigValue {
     return constants;
   }
 
-  /**
-   * Stringifies this component and possibly appends other, also stringified, components to it's tail
-   * @param environment Environment to evaluate in
-   * @param others Other evaluables to also stringify and append
-   */
-  public String stringify(IEvaluationEnvironment environment, BukkitEvaluable... others) {
-    String self = asScalar(ScalarType.STRING, environment);
-
-    if (others.length == 0)
-      return self;
-
-    StringJoiner joiner = new StringJoiner("");
-
-    joiner.add(self);
-
-    for (BukkitEvaluable evaluable : others)
-      joiner.add(evaluable.asScalar(ScalarType.STRING, environment));
-
-    return joiner.toString();
-  }
-
-  public String stringify(BukkitEvaluable... others) {
-    return stringify(GPEEE.EMPTY_ENVIRONMENT, others);
-  }
-
-  //=========================================================================//
-  //                                Overrides                                //
-  //=========================================================================//
-
-  @Override
-  @SuppressWarnings("unchecked")
-  protected <T> T interpretScalar(@Nullable Object input, ScalarType<T> type, IEvaluationEnvironment env) {
-    T scalar = super.interpretScalar(input, type, env);
-
-    if (scalar instanceof String)
-      scalar = (T) ChatColor.translateAlternateColorCodes('&', (String) scalar);
-
-    return scalar;
-  }
-
-
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
@@ -240,7 +201,7 @@ public class BukkitEvaluable extends ConfigValue {
       try {
         List<Field> constants = Arrays.stream(type.getDeclaredFields())
           .filter(field -> field.getType().equals(type) && Modifier.isStatic(field.getModifiers()))
-          .collect(Collectors.toList());
+          .toList();
 
         for (Field constant : constants) {
           if (!constant.getName().toLowerCase().equals(value))
@@ -258,6 +219,25 @@ public class BukkitEvaluable extends ConfigValue {
       cacheEnumLookup(type, value, result);
 
     return (T) result;
+  }
+
+  //=========================================================================//
+  //                                Applicator                               //
+  //=========================================================================//
+
+  // Convenient relays, as to not have to provide the instance
+  // Not necessarily clean design, but I just want to move on for the time being...
+
+  public void setDisplayName(ItemMeta meta, IEvaluationEnvironment environment) {
+    applicator.setDisplayName(meta, this, environment);
+  }
+
+  public void setLore(ItemMeta meta, IEvaluationEnvironment environment, boolean override) {
+    applicator.setLore(meta, this, environment, override);
+  }
+
+  public void sendMessage(CommandSender receiver, IEvaluationEnvironment environment) {
+    applicator.sendMessage(receiver, this, environment);
   }
 
   private static Optional<Object> performEnumCacheLookup(Class<?> type, String value) {
