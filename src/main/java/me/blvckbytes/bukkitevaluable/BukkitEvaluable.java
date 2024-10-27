@@ -30,6 +30,7 @@ import com.cryptomorin.xseries.XPotion;
 import me.blvckbytes.bbconfigmapper.ConfigValue;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.applicator.EvaluableApplicator;
+import me.blvckbytes.gpeee.GPEEE;
 import me.blvckbytes.gpeee.IExpressionEvaluator;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -230,6 +231,11 @@ public class BukkitEvaluable extends ConfigValue {
 
   public void sendMessage(CommandSender receiver, IEvaluationEnvironment environment) {
     applicator.sendMessage(receiver, this, environment);
+  }
+
+  public static void sendMessage(CommandSender receiver, @Nullable BukkitEvaluable evaluable, @Nullable IEvaluationEnvironment environment) {
+    if (evaluable != null)
+      evaluable.sendMessage(receiver, environment == null ? GPEEE.EMPTY_ENVIRONMENT : environment);
   }
 
   private static Optional<Object> performEnumCacheLookup(Class<?> type, String value) {
