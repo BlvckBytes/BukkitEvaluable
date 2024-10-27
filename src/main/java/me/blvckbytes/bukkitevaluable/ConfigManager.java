@@ -388,7 +388,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
 
         config.clearKeyCache();
 
-        logger.info("Applied pre-processor input " + preProcessorInput + " to " + file);
+        logger.info("Applied pre-processor input " + preProcessorFileName + " to " + file);
 
         var preProcessorFileNameWithoutExtension = preProcessorFileName.substring(0, preProcessorFileName.lastIndexOf('.'));
         var outputFile = new File(file.getParentFile(), "result." + preProcessorFileNameWithoutExtension + ".yml");
