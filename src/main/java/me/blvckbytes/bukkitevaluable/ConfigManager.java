@@ -115,7 +115,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
           internalInput.load(internalFileStreamReader);
         }
       } catch (PreProcessorInputException e) {
-        throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + internalPath);
+        throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + internalPath + "\n" + e.lineContents);
       }
 
 
@@ -156,7 +156,7 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
         }
       }
     } catch (PreProcessorInputException e) {
-      throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + externalFile);
+      throw new IllegalStateException("Conflict " + e.conflict + " occurred on line " + e.lineNumber + " while trying to load " + externalFile + "\n" + e.lineContents);
     }
 
     preProcessorInputByFileName.put(fileName, externalInput);
