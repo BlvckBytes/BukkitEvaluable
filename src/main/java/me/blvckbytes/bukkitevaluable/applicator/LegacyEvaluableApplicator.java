@@ -40,14 +40,13 @@ public class LegacyEvaluableApplicator implements EvaluableApplicator {
 
   @Override
   public void sendMessage(CommandSender receiver, BukkitEvaluable evaluable, IEvaluationEnvironment environment) {
-    if (evaluable.value instanceof Collection<?>) {
-      for (var message : evaluable.asList(ScalarType.STRING, environment))
-        receiver.sendMessage(message);
+    var value = evaluable.asRawObject(environment);
 
+    if (value instanceof Collection<?> collection) {
+      collection.forEach(item -> receiver.sendMessage(String.valueOf(item)));
       return;
     }
 
-    var message = evaluable.asScalar(ScalarType.STRING, environment);
-    receiver.sendMessage(message);
+    receiver.sendMessage(String.valueOf(value));
   }
 }
