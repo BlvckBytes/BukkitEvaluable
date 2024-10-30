@@ -48,4 +48,16 @@ public abstract class ACommandSection extends AConfigSection {
 
     commandUpdater.tryRegisterCommand(command);
   }
+
+  public boolean isLabel(String label) {
+    if (evaluatedName.equalsIgnoreCase(label))
+      return true;
+
+    for (var evaluatedAlias : evaluatedAliases) {
+      if (evaluatedAlias.equalsIgnoreCase(label))
+        return true;
+    }
+
+    return false;
+  }
 }
