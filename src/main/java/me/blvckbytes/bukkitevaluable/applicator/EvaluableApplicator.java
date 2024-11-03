@@ -13,4 +13,6 @@ public interface EvaluableApplicator {
 
   void sendMessage(CommandSender receiver, BukkitEvaluable evaluable, IEvaluationEnvironment environment);
 
+  Object asChatComponent(BukkitEvaluable evaluable, IEvaluationEnvironment environment) throws Throwable;
+
 }
