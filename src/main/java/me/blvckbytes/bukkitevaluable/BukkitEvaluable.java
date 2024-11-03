@@ -233,6 +233,10 @@ public class BukkitEvaluable extends ConfigValue {
     applicator.sendMessage(receiver, this, environment);
   }
 
+  public Object asChatComponent(IEvaluationEnvironment environment) throws Throwable {
+    return applicator.asChatComponent(this, environment);
+  }
+
   public static void sendMessage(CommandSender receiver, @Nullable BukkitEvaluable evaluable, @Nullable IEvaluationEnvironment environment) {
     if (evaluable != null)
       evaluable.sendMessage(receiver, environment == null ? GPEEE.EMPTY_ENVIRONMENT : environment);
