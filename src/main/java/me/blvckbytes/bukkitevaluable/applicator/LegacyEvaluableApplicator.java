@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
+import me.blvckbytes.gpeee.parser.expression.AExpression;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -46,7 +47,23 @@ public class LegacyEvaluableApplicator extends EvaluableApplicatorBase {
     var value = evaluable.asRawObject(environment);
 
     if (value instanceof Collection<?> collection) {
-      collection.forEach(item -> receiver.sendMessage(String.valueOf(item)));
+      collection.forEach(item -> {
+
+        if (item instanceof AExpression itemExpression) {
+          var expressionValue = evaluable.evaluator.evaluateExpression(itemExpression, environment);
+
+          if (expressionValue instanceof Collection<?> resultLines) {
+            resultLines.forEach(resultLine -> receiver.sendMessage(String.valueOf(resultLine)));
+            return;
+          }
+
+          receiver.sendMessage(String.valueOf(expressionValue));
+          return;
+        }
+
+        receiver.sendMessage(String.valueOf(item));
+      });
+
       return;
     }
 

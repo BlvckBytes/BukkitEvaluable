@@ -95,6 +95,10 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
     loadAndPossiblyMigrateInputFiles();
   }
 
+  public EvaluableApplicator getApplicator() {
+    return applicator;
+  }
+
   private void loadAndPossiblyMigrateInputFile(@Nullable Path internalPath, File externalFile) throws Exception {
     var fileName = externalFile.getName().toLowerCase();
 
