@@ -27,6 +27,8 @@ package me.blvckbytes.bukkitevaluable;
 import com.cryptomorin.xseries.XEnchantment;
 import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XPotion;
+import com.cryptomorin.xseries.XSound;
+import com.cryptomorin.xseries.particles.XParticle;
 import me.blvckbytes.bbconfigmapper.ConfigValue;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.applicator.EvaluableApplicator;
@@ -71,6 +73,14 @@ public class BukkitEvaluable extends ConfigValue {
 
   public @Nullable XMaterial asXMaterial(IEvaluationEnvironment environment) {
     return XMaterial.matchXMaterial(asScalar(ScalarType.STRING, environment)).orElse(null);
+  }
+
+  public @Nullable XSound asXSound(IEvaluationEnvironment environment) {
+    return XSound.matchXSound(asScalar(ScalarType.STRING, environment)).orElse(null);
+  }
+
+  public @Nullable XParticle asXParticle(IEvaluationEnvironment environment) {
+    return XParticle.of(asScalar(ScalarType.STRING, environment)).orElse(null);
   }
 
   public @Nullable Enchantment asEnchantment(IEvaluationEnvironment environment) {
