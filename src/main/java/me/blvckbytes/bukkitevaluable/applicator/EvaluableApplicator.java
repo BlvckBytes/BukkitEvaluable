@@ -4,6 +4,7 @@ import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.Nullable;
 
 public interface EvaluableApplicator {
 
@@ -14,5 +15,14 @@ public interface EvaluableApplicator {
   void sendMessage(CommandSender receiver, BukkitEvaluable evaluable, IEvaluationEnvironment environment);
 
   Object asChatComponent(BukkitEvaluable evaluable, IEvaluationEnvironment environment) throws Throwable;
+
+  void sendActionBarMessage(CommandSender receiver, BukkitEvaluable evaluable, IEvaluationEnvironment environment);
+
+  void sendTitles(
+    CommandSender receiver,
+    @Nullable BukkitEvaluable title, @Nullable IEvaluationEnvironment titleEnvironment,
+    @Nullable BukkitEvaluable subTitle, @Nullable IEvaluationEnvironment subTitleEnvironment,
+    int fadeIn, int stay, int fadeOut
+  );
 
 }

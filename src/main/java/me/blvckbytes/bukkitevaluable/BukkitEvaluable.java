@@ -242,6 +242,10 @@ public class BukkitEvaluable extends ConfigValue {
     applicator.sendMessage(receiver, this, environment);
   }
 
+  public void sendActionBarMessage(CommandSender receiver, IEvaluationEnvironment environment) {
+    applicator.sendActionBarMessage(receiver, this, environment);
+  }
+
   public Object asChatComponent(IEvaluationEnvironment environment) throws Throwable {
     return applicator.asChatComponent(this, environment);
   }
