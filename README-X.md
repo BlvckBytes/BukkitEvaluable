@@ -43,13 +43,17 @@ applicable to a certain material type, but it still serves as a great template.
 amount: 32
 type: DIAMOND_PICKAXE
 name: '&6My fancy pickaxe'
+disallowName: false
 lore:
   - ' '
   - '&7This is a &dlore line&7!'
   - '&7This is another &dlore line&7!'
+disallowLore: false
 flags:
   - HIDE_ATTRIBUTES
   - HIDE_UNBREAKABLE
+disallowFlags: false
+flagsMatchingMode: HAS_EXACT
 color: ORANGE
 enchantments:
   -
@@ -58,6 +62,8 @@ enchantments:
   -
     enchantment: KNOCKBACK
     level: 2
+disallowEnchantments: false
+enchantmentsMatchingMode: HAS_AT_LEAST
 textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE4YTJkZDViZWYwYjA3M2IxMzI3MWE3ZWViOWNmZWE3YWZlODU5M2M1N2E5MzgyMWU0MzE3NTU3MjQ2MTgxMiJ9fX0='
 baseEffect:
   type: HARM
@@ -71,6 +77,8 @@ customEffects:
     ambient: false
     particles: true
     icon: true
+disallowCustomEffects: false
+customEffectsMatchingMode: HAS_NOT
 bannerPatterns:
   -
     pattern: STRIPE_TOP
@@ -78,10 +86,16 @@ bannerPatterns:
   -
     pattern: STRIPE_BOTTOM
     color: BLUE
+disallowBannerPatterns: false
+bannerPatternsMatchingMode: HAS_EXACT
 patchFlags:
   - OVERRIDE_LORE
   - OVERRIDE_BANNER_PATTERNS
 ```
+
+For `MatchingMode`-values, see the following enumeration:
+
+<!-- #include src/main/java/me/blvckbytes/bukkitevaluable/section/MatchingMode.java -->
 
 ### Bukkit Color Value
 

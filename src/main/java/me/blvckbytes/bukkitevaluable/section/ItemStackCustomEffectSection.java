@@ -29,6 +29,7 @@ import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,15 @@ public class ItemStackCustomEffectSection extends AConfigSection {
       particles != null && particles,
       icon != null && icon
     );
+  }
+
+  public boolean isContainedByMeta(PotionMeta meta, IEvaluationEnvironment environment) {
+    for (PotionEffect customEffect : meta.getCustomEffects()) {
+      if (describesEffect(customEffect, environment))
+        return true;
+    }
+
+    return false;
   }
 
   public boolean describesEffect(PotionEffect effect, IEvaluationEnvironment environment) {

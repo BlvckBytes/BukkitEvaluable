@@ -36,11 +36,9 @@ import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.block.banner.Pattern;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
-import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -52,19 +50,44 @@ public class ItemStackSection extends AConfigSection {
 
   private @Nullable BukkitEvaluable amount;
   private @Nullable BukkitEvaluable type;
+
   private @Nullable BukkitEvaluable name;
+  private boolean disallowName;
+
   private @Nullable BukkitEvaluable lore;
+  private boolean disallowLore;
+
   private @Nullable BukkitEvaluable flags;
+  private MatchingMode flagsMatchingMode;
+  private boolean disallowFlags;
+
   private @Nullable BukkitEvaluable color;
+
   private ItemStackEnchantmentSection @Nullable [] enchantments;
+  private MatchingMode enchantmentsMatchingMode;
+  private boolean disallowEnchantments;
+
   private @Nullable BukkitEvaluable textures;
+
   private @Nullable ItemStackBaseEffectSection baseEffect;
+
   private ItemStackCustomEffectSection @Nullable [] customEffects;
+  private MatchingMode customEffectsMatchingMode;
+  private boolean disallowCustomEffects;
+
   private ItemStackBannerPatternSection @Nullable [] bannerPatterns;
+  private MatchingMode bannerPatternsMatchingMode;
+  private boolean disallowBannerPatterns;
+
   private @CSAlways List<EPatchFlag> patchFlags;
 
   public ItemStackSection(EvaluationEnvironmentBuilder baseEnvironment) {
     super(baseEnvironment);
+
+    flagsMatchingMode = MatchingMode.HAS_AT_LEAST;
+    enchantmentsMatchingMode = MatchingMode.HAS_AT_LEAST;
+    customEffectsMatchingMode = MatchingMode.HAS_AT_LEAST;
+    bannerPatternsMatchingMode = MatchingMode.HAS_AT_LEAST;
   }
 
   /**
@@ -183,11 +206,21 @@ public class ItemStackSection extends AConfigSection {
       }
     }
 
+    if (disallowName && meta.hasDisplayName()) {
+      if (addMismatchAndPossiblyBreak(ComparisonMismatch.DISPLAY_NAME_MISMATCH, mismatches, nonBreakers))
+        return mismatches;
+    }
+
     if (name != null) {
       if (!name.asScalar(ScalarType.STRING, environment).equals(meta.getDisplayName())) {
         if (addMismatchAndPossiblyBreak(ComparisonMismatch.DISPLAY_NAME_MISMATCH, mismatches, nonBreakers))
           return mismatches;
       }
+    }
+
+    if (disallowLore && meta.hasLore()) {
+      if (addMismatchAndPossiblyBreak(ComparisonMismatch.LORE_MISMATCH, mismatches, nonBreakers))
+        return mismatches;
     }
 
     if (lore != null) {
@@ -197,11 +230,9 @@ public class ItemStackSection extends AConfigSection {
       }
     }
 
-    if (flags != null) {
-      if (doCollectionsDiffer(flags.asEnumerationConstantSet(ItemFlag.class, environment), meta.getItemFlags())) {
-        if (addMismatchAndPossiblyBreak(ComparisonMismatch.FLAGS_MISMATCH, mismatches, nonBreakers))
-          return mismatches;
-      }
+    if (!areFlagsSatisfied(meta, environment)) {
+      if (addMismatchAndPossiblyBreak(ComparisonMismatch.FLAGS_MISMATCH, mismatches, nonBreakers))
+        return mismatches;
     }
 
     if (!isColorSatisfied(meta, environment)) {
@@ -237,61 +268,103 @@ public class ItemStackSection extends AConfigSection {
     return mismatches;
   }
 
+  private boolean areFlagsSatisfied(ItemMeta meta, IEvaluationEnvironment environment) {
+    var metaFlags = meta.getItemFlags();
+
+    if (disallowFlags && !metaFlags.isEmpty())
+      return false;
+
+    if (flags == null)
+      return true;
+
+    var sectionFlags = flags.asEnumerationConstantSet(ItemFlag.class, environment);
+
+    switch (flagsMatchingMode) {
+      case HAS_NOT -> {
+        for (var sectionFlag : sectionFlags) {
+          if (metaFlags.contains(sectionFlag))
+            return false;
+        }
+      }
+      case HAS_AT_LEAST, HAS_EXACT -> {
+        for (var sectionFlag : sectionFlags) {
+          if (!metaFlags.contains(sectionFlag))
+            return false;
+        }
+
+        if (flagsMatchingMode == MatchingMode.HAS_EXACT) {
+          if (metaFlags.size() != sectionFlags.size())
+            return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   private boolean areBannerPatternsSatisfied(ItemMeta meta, IEvaluationEnvironment environment) {
+    if (disallowBannerPatterns && meta instanceof BannerMeta bannerMeta && !bannerMeta.getPatterns().isEmpty())
+      return false;
+
     if (bannerPatterns == null)
       return true;
 
-    if (!(meta instanceof BannerMeta))
+    if (!(meta instanceof BannerMeta bannerMeta))
       return false;
 
-    List<Pattern> patterns = ((BannerMeta) meta).getPatterns();
-
-    for (ItemStackBannerPatternSection patternSection : bannerPatterns) {
-
-      boolean anyMatched = false;
-      for (Pattern pattern : patterns) {
-        if (!patternSection.describesPattern(pattern, environment))
-          continue;
-
-        anyMatched = true;
-        break;
+    switch (bannerPatternsMatchingMode) {
+      case HAS_NOT -> {
+        for (ItemStackBannerPatternSection patternSection : bannerPatterns) {
+          if (patternSection.isContainedByMeta(bannerMeta, environment))
+            return false;
+        }
       }
+      case HAS_AT_LEAST, HAS_EXACT -> {
+        for (ItemStackBannerPatternSection patternSection : bannerPatterns) {
+          if (!patternSection.isContainedByMeta(bannerMeta, environment))
+            return false;
+        }
 
-      // Current pattern is not represented within the patterns of the banner
-      if (!anyMatched)
-        return false;
+        if (bannerPatternsMatchingMode == MatchingMode.HAS_EXACT) {
+          if (bannerMeta.getPatterns().size() != bannerPatterns.length)
+            return false;
+        }
+      }
     }
 
-    // All patterns present
     return true;
   }
 
   private boolean areCustomEffectsSatisfied(ItemMeta meta, IEvaluationEnvironment environment) {
+    if (disallowCustomEffects && meta instanceof PotionMeta potionMeta && potionMeta.hasCustomEffects())
+      return false;
+
     if (customEffects == null)
       return true;
 
-    if (!(meta instanceof PotionMeta))
+    if (!(meta instanceof PotionMeta potionMeta))
       return false;
 
-    List<PotionEffect> effects = ((PotionMeta) meta).getCustomEffects();
-
-    for (ItemStackCustomEffectSection effectSection : customEffects) {
-
-      boolean anyMatched = false;
-      for (PotionEffect customEffect : effects) {
-        if (!effectSection.describesEffect(customEffect, environment))
-          continue;
-
-        anyMatched = true;
-        break;
+    switch (customEffectsMatchingMode) {
+      case HAS_NOT -> {
+        for (ItemStackCustomEffectSection effectSection : customEffects) {
+          if (effectSection.isContainedByMeta(potionMeta, environment))
+            return false;
+        }
       }
+      case HAS_AT_LEAST, HAS_EXACT -> {
+        for (ItemStackCustomEffectSection effectSection : customEffects) {
+          if (effectSection.isContainedByMeta(potionMeta, environment))
+            return false;
+        }
 
-      // Current custom effect is not represented within the custom effects of the potion
-      if (!anyMatched)
-        return false;
+        if (customEffectsMatchingMode == MatchingMode.HAS_EXACT) {
+          if (potionMeta.getCustomEffects().size() != customEffects.length)
+            return false;
+        }
+      }
     }
 
-    // All effects present
     return true;
   }
 
@@ -319,36 +392,38 @@ public class ItemStackSection extends AConfigSection {
   }
 
   private boolean areEnchantmentsSatisfied(ItemMeta meta, IEvaluationEnvironment environment) {
+    if (disallowEnchantments && meta.hasEnchants())
+      return false;
+
     if (enchantments == null)
       return true;
 
-    for (ItemStackEnchantmentSection enchantment : enchantments) {
-      boolean enchantmentSatisfied = enchantment.describesEnchantment((e, l) -> {
-        // Empty description, always matches
-        if (e == null && l == null)
-          return true;
+    switch (enchantmentsMatchingMode) {
+      case HAS_NOT -> {
+        for (ItemStackEnchantmentSection enchantmentSection : enchantments) {
+          if (enchantmentSection.isContainedByMeta(meta,environment) == CheckResult.MATCHING_SECTION)
+            return false;
+        }
+      }
 
-        // Enchantment provided, enchantment has to be present
-        if (e != null && !meta.hasEnchant(e))
-          return false;
+      case HAS_AT_LEAST, HAS_EXACT -> {
+        var validSectionCount = 0;
 
-        // Level provided
-        if (l != null) {
+        for (ItemStackEnchantmentSection enchantmentSection : enchantments) {
+          var result = enchantmentSection.isContainedByMeta(meta,environment);
 
-          // Enchantment also provided, enchantment has to be present at that level
-          if (e != null)
-            return meta.getEnchantLevel(e) == l;
+          if (enchantmentSection.isContainedByMeta(meta,environment) != CheckResult.MATCHING_SECTION)
+            return false;
 
-          // No enchantment provided, the level just has to be present on any enchantment
-          return meta.getEnchants().containsValue(l);
+          if (result != CheckResult.INVALID_SECTION)
+            ++validSectionCount;
         }
 
-        // All checks passed
-        return true;
-      }, environment);
-
-      if (!enchantmentSatisfied)
-        return false;
+        if (enchantmentsMatchingMode == MatchingMode.HAS_EXACT) {
+          if (validSectionCount != meta.getEnchants().size())
+            return false;
+        }
+      }
     }
 
     return true;

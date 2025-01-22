@@ -24,36 +24,55 @@
 
 package me.blvckbytes.bukkitevaluable.section;
 
+import me.blvckbytes.bbconfigmapper.MappingError;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
-import me.blvckbytes.gpeee.Tuple;
 import me.blvckbytes.gpeee.interpreter.EvaluationEnvironmentBuilder;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
-import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 public class ItemStackEnchantmentSection extends AConfigSection {
 
-  private @Nullable BukkitEvaluable enchantment;
+  private BukkitEvaluable enchantment;
   private @Nullable BukkitEvaluable level;
 
   public ItemStackEnchantmentSection(EvaluationEnvironmentBuilder baseEnvironment) {
     super(baseEnvironment);
   }
 
-  public @Nullable Tuple<Enchantment, Integer> asEnchantment(IEvaluationEnvironment environment) {
-    // Try to parse the enchantment, if provided
-    Enchantment enchantment = this.enchantment == null ? null : this.enchantment.asEnchantment(environment);
+  @Override
+  public void afterParsing(List<Field> fields) throws Exception {
+    super.afterParsing(fields);
 
-    // No enchantment provided
     if (enchantment == null)
-      return null;
+      throw new MappingError("Property \"enchantment\" of an item's contained enchantment cannot be absent");
+  }
 
-    Integer level = this.level == null ? null : this.level.<Long>asScalar(ScalarType.LONG, environment).intValue();
+  public CheckResult isContainedByMeta(ItemMeta meta, IEvaluationEnvironment environment) {
+    var expectedEnchantment = enchantment.asEnchantment(environment);
 
-    // Fall back to level 1 if not provided
-    return new Tuple<>(enchantment, level == null ? 1 : level);
+    if (expectedEnchantment == null)
+      return CheckResult.INVALID_SECTION;
+
+    var containedLevel = meta.getEnchantLevel(expectedEnchantment);
+
+    if (containedLevel == 0)
+      return CheckResult.MISMATCHING_SECTION;
+
+    if (level == null)
+      return CheckResult.MATCHING_SECTION;
+
+    var expectedLevel = level.asScalar(ScalarType.INT, environment);
+
+    if (expectedLevel == containedLevel)
+      return CheckResult.MATCHING_SECTION;
+
+    return CheckResult.MISMATCHING_SECTION;
   }
 
   public BukkitEvaluable getEnchantment() {
@@ -62,20 +81,5 @@ public class ItemStackEnchantmentSection extends AConfigSection {
 
   public BukkitEvaluable getLevel() {
     return level;
-  }
-
-  public boolean describesEnchantment(FEnchantmentPresenceChecker presenceChecker, IEvaluationEnvironment environment) {
-    if (this.enchantment != null) {
-      Enchantment bukkitEnchantment = this.enchantment.asEnchantment(environment);
-      if (!presenceChecker.apply(bukkitEnchantment, null))
-        return false;
-    }
-
-    if (this.level != null) {
-      if (!presenceChecker.apply(null, this.level.<Long>asScalar(ScalarType.LONG, environment).intValue()))
-        return false;
-    }
-
-    return true;
   }
 }

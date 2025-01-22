@@ -31,6 +31,7 @@ import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
 import org.bukkit.DyeColor;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
+import org.bukkit.inventory.meta.BannerMeta;
 import org.jetbrains.annotations.Nullable;
 
 public class ItemStackBannerPatternSection extends AConfigSection {
@@ -61,6 +62,15 @@ public class ItemStackBannerPatternSection extends AConfigSection {
     return color;
   }
 
+  public boolean isContainedByMeta(BannerMeta meta, IEvaluationEnvironment environment) {
+    for (var currentPattern : meta.getPatterns()) {
+      if (describesPattern(currentPattern, environment))
+        return true;
+    }
+
+    return false;
+  }
+
   public boolean describesPattern(Pattern pattern, IEvaluationEnvironment environment) {
     if (this.pattern != null) {
       PatternType type = this.pattern.asEnumerationConstant(PatternType.class, environment);
@@ -69,7 +79,7 @@ public class ItemStackBannerPatternSection extends AConfigSection {
     }
 
     if (this.color != null) {
-      DyeColor color = this.pattern.asEnumerationConstant(DyeColor.class, environment);
+      DyeColor color = this.color.asEnumerationConstant(DyeColor.class, environment);
       if (color != null && !color.equals(pattern.getColor()))
         return false;
     }

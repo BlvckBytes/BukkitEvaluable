@@ -379,10 +379,19 @@ public class ItemBuilder implements IItemBuildable {
     if (enchantmentsOverride)
       resMeta.getEnchants().keySet().forEach(resMeta::removeEnchant);
 
-    for (ItemStackEnchantmentSection enchantment : enchantments) {
-      Tuple<Enchantment, Integer> enchantmentData = enchantment.asEnchantment(environment);
-      if (enchantmentData != null)
-        resMeta.addEnchant(enchantmentData.a, enchantmentData.b, true);
+    for (ItemStackEnchantmentSection enchantmentSection : enchantments) {
+      var enchantment = enchantmentSection.getEnchantment().asEnchantment(environment);
+
+      if (enchantment == null)
+        continue;
+
+      var levelSection = enchantmentSection.getLevel();
+      var level = 1;
+
+      if (levelSection != null)
+        level = levelSection.asScalar(ScalarType.INT, environment);
+
+      resMeta.addEnchant(enchantment, level, true);
     }
 
     ///////////////////////////////// Item Flags ////////////////////////////////
