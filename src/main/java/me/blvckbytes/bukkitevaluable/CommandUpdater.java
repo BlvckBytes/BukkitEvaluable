@@ -63,11 +63,13 @@ public class CommandUpdater {
     }
   }
 
-  public void tryRegisterCommand(Command command) {
+  public boolean tryRegisterCommand(Command command) {
     try {
       commandMap.register(pluginPrefix, command);
+      return true;
     } catch (Exception e) {
       logger.log(Level.SEVERE, "Could not register command " + command.getName(), e);
+      return false;
     }
   }
 
