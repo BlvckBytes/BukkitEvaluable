@@ -7,14 +7,16 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConfigKeeper<T extends AConfigSection> {
 
   private final ConfigManager configManager;
   private final String fileName;
   private final Class<T> rootSectionType;
-  private final List<Runnable> reloadListeners;
+  private final Map<ReloadPriority, List<Runnable>> reloadListenersByPriority;
 
   public T rootSection;
 
@@ -26,19 +28,30 @@ public class ConfigKeeper<T extends AConfigSection> {
     this.configManager = configManager;
     this.fileName = fileName;
     this.rootSectionType = rootSectionType;
-    this.reloadListeners = new ArrayList<>();
+    this.reloadListenersByPriority = new HashMap<>();
     this.rootSection = loadRootSection(true);
   }
 
+  public void registerReloadListener(Runnable listener, ReloadPriority priority) {
+    reloadListenersByPriority.computeIfAbsent(priority, key -> new ArrayList<>()).add(listener);
+  }
+
   public void registerReloadListener(Runnable listener) {
-    this.reloadListeners.add(listener);
+    registerReloadListener(listener, ReloadPriority.MEDIUM);
   }
 
   public void reload() throws Exception {
     this.rootSection = loadRootSection(false);
 
-    for (var listener : this.reloadListeners)
-      listener.run();
+    for (var priority : ReloadPriority.VALUES_IN_CALL_ORDER) {
+      var listeners = reloadListenersByPriority.get(priority);
+
+      if (listeners == null)
+        continue;
+
+      for (var listener : listeners)
+        listener.run();
+    }
   }
 
   private T loadRootSection(boolean initial) throws Exception {
