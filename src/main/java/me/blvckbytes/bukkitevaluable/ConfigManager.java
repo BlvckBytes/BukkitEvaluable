@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,10 +73,24 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
   private final PreProcessor preProcessor;
   private final EvaluableApplicator applicator;
 
-  public ConfigManager(Plugin plugin, String folderName) throws Exception {
+  private final @Nullable Consumer<EvaluationEnvironmentBuilder> baseEnvironmentConsumer;
+
+  public ConfigManager(
+    Plugin plugin,
+    String folderName
+  ) throws Exception {
+    this(plugin, folderName, null);
+  }
+
+  public ConfigManager(
+    Plugin plugin,
+    String folderName,
+    @Nullable Consumer<EvaluationEnvironmentBuilder> baseEnvironmentConsumer
+  ) throws Exception {
     this.applicator = new LegacyEvaluableApplicator();
     this.mapperByFileName = new HashMap<>();
     this.preProcessorInputByFileName = new HashMap<>();
+    this.baseEnvironmentConsumer = baseEnvironmentConsumer;
 
     this.plugin = plugin;
     this.logger = plugin.getLogger();
@@ -410,6 +425,10 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
       EvaluationEnvironmentBuilder baseEnvironment = new EvaluationEnvironmentBuilder()
         .withFunction("base64_to_skin_url", base64ToSkinUrlFunction)
         .withFunction("skin_url_to_base64", skinUrlToBase64Function);
+
+      // Allow for external additions to the base environment
+      if (baseEnvironmentConsumer != null)
+        baseEnvironmentConsumer.accept(baseEnvironment);
 
       // Enable support for expressions within the LUT also
       baseEnvironment
