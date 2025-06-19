@@ -1,6 +1,5 @@
 package me.blvckbytes.bukkitevaluable.applicator;
 
-import com.google.gson.JsonObject;
 import me.blvckbytes.bbconfigmapper.ScalarType;
 import me.blvckbytes.bukkitevaluable.BukkitEvaluable;
 import me.blvckbytes.gpeee.interpreter.IEvaluationEnvironment;
@@ -16,9 +15,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class LegacyEvaluableApplicator extends EvaluableApplicatorBase {
+public class LegacyEvaluableApplicator implements EvaluableApplicator {
 
-  public LegacyEvaluableApplicator() throws Exception {}
+  public LegacyEvaluableApplicator() {}
 
   @Override
   public void setDisplayName(ItemMeta meta, BukkitEvaluable evaluable, IEvaluationEnvironment environment) {
@@ -72,13 +71,6 @@ public class LegacyEvaluableApplicator extends EvaluableApplicatorBase {
     }
 
     receiver.sendMessage(evaluable.asScalar(ScalarType.STRING, environment));
-  }
-
-  @Override
-  public Object asChatComponent(BukkitEvaluable evaluable, IEvaluationEnvironment environment) throws Throwable {
-    var componentJson = new JsonObject();
-    componentJson.addProperty("text", evaluable.asScalar(ScalarType.STRING, environment));
-    return createChatComponent(componentJson);
   }
 
   @Override

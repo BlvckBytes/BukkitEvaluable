@@ -246,10 +246,6 @@ public class BukkitEvaluable extends ConfigValue {
     applicator.sendActionBarMessage(receiver, this, environment);
   }
 
-  public Object asChatComponent(IEvaluationEnvironment environment) throws Throwable {
-    return applicator.asChatComponent(this, environment);
-  }
-
   private static Optional<Object> performEnumCacheLookup(Class<?> type, String value) {
     Map<String, Object> constantCache = enumCache.get(type);
 
