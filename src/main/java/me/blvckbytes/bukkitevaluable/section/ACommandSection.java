@@ -60,4 +60,18 @@ public abstract class ACommandSection extends AConfigSection {
 
     return false;
   }
+
+  public String getShortestNameOrAlias() {
+    if (evaluatedAliases.isEmpty())
+      return evaluatedName;
+
+    var shortestValue = evaluatedName;
+
+    for (var alias : evaluatedAliases) {
+      if (alias.length() < shortestValue.length())
+        shortestValue = alias;
+    }
+
+    return shortestValue;
+  }
 }
