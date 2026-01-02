@@ -2,8 +2,8 @@ package me.blvckbytes.bukkitevaluable;
 
 import me.blvckbytes.bbconfigmapper.sections.AConfigSection;
 import me.blvckbytes.bbconfigmapper.sections.CSIgnore;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
