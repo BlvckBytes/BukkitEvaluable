@@ -416,9 +416,6 @@ public class ConfigManager implements IConfigManager, IValueConverterRegistry {
         logger.info("Saved read-only pre-processed version of " + file + " at " + outputFile);
       }
 
-      else
-        logger.warning("Found no usable pre-processor input in header-comment of " + file);
-
       Object lutValue = config.get("lut");
       Map<?, ?> lut = lutValue instanceof Map ? (Map<?, ?>) lutValue : new HashMap<>();
 
